@@ -5,191 +5,142 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rendición de Gastos Empresarial</title>
 
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e3a8a">
+
 <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 
 <style>
-/* Mantén tus estilos aquí (igual que antes) */
+body{font-family:Arial;margin:0;background:#f4f6f9}
+header{background:#1e3a8a;color:white;padding:15px;text-align:center}
+.container{padding:20px;max-width:1000px;margin:auto}
+.card{background:white;padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+input,select,textarea{width:100%;padding:8px;margin:5px 0 10px;border-radius:5px;border:1px solid #ccc}
+button{padding:10px 15px;border:none;border-radius:6px;cursor:pointer;margin:5px 0}
+.btn-primary{background:#2563eb;color:white}
+.btn-success{background:#16a34a;color:white}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:8px;text-align:left}
+.preview{width:60px;border-radius:6px}
+@media(max-width:600px){.container{padding:10px}}
 </style>
 </head>
 <body>
 
-<header>
-    <h2>Rendición de Gastos Empresarial</h2>
-    <div id="fechaActual"></div>
-</header>
+<header><h2>Rendición de Gastos Empresarial</h2></header>
 
 <div class="container">
-   <div id="alertContainer"></div>
+<div class="card">
+<h3>Registrar Gasto</h3>
+<input id="fecha" type="date">
+<input id="empresa" placeholder="Empresa">
+<input id="monto" type="number" placeholder="Monto">
+<input id="imagen" type="file" accept="image/*">
+<button id="btnGuardar" class="btn-primary">Guardar</button>
+</div>
 
-   <div class="card">
-       <h3>Registrar Nuevo Gasto</h3>
-       <div class="form-grid">
-           <input id="fecha" type="date">
-           <select id="tipoGasto">
-               <option value="">Tipo de Gasto</option>
-               <option>Traslado</option>
-               <option>Alimentación</option>
-               <option>Hospedaje</option>
-               <option>Combustible</option>
-               <option>Otros</option>
-           </select>
-           <select id="tipoDocumento">
-               <option value="">Tipo Documento</option>
-               <option>Factura</option>
-               <option>Boleta</option>
-           </select>
-           <input id="numeroDocumento" placeholder="N° Documento">
-           <input id="empresa" placeholder="Empresa">
-           <input id="monto" type="number" placeholder="Monto CLP">
-           <textarea id="descripcion" placeholder="Descripción"></textarea>
-           <input id="imagen" type="file" accept="image/*">
-       </div>
-
-       <div class="button-group">
-           <button type="button" id="btnGuardar" class="btn-primary">Guardar</button>
-           <button type="button" id="btnLimpiar" class="btn-secondary">Limpiar</button>
-           <button type="button" id="btnEliminarTodo" class="btn-danger">Eliminar Todo</button>
-       </div>
-   </div>
-
-   <div class="card">
-       <h3>Listado de Gastos</h3>
-       <div id="tablaGastos" class="table-wrapper"></div>
-
-       <div class="button-group">
-           <button type="button" id="btnExportar" class="btn-success">Exportar Excel con Imágenes</button>
-           <button type="button" id="btnCorreo" class="btn-secondary">Enviar por Correo</button>
-       </div>
-   </div>
+<div class="card">
+<h3>Listado</h3>
+<div id="tabla"></div>
+<button id="btnExportar" class="btn-success">Exportar Excel con Imagen</button>
+</div>
 </div>
 
 <script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+}
+
 document.addEventListener("DOMContentLoaded", function(){
 
-    // Variables seguras
-    const STORAGE_KEY="gastos_empresa_final_v2";
+const KEY="gastos_pro_v1";
 
-    const fechaInput=document.getElementById("fecha");
-    const tipoGastoInput=document.getElementById("tipoGasto");
-    const tipoDocInput=document.getElementById("tipoDocumento");
-    const numDocInput=document.getElementById("numeroDocumento");
-    const empresaInput=document.getElementById("empresa");
-    const montoInput=document.getElementById("monto");
-    const descInput=document.getElementById("descripcion");
-    const imgInput=document.getElementById("imagen");
-    const tablaGastos=document.getElementById("tablaGastos");
-    const alertContainer=document.getElementById("alertContainer");
+const fecha=document.getElementById("fecha");
+const empresa=document.getElementById("empresa");
+const monto=document.getElementById("monto");
+const imagen=document.getElementById("imagen");
+const tabla=document.getElementById("tabla");
 
-    function cargarGastos(){
-        return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];
-    }
+function cargar(){return JSON.parse(localStorage.getItem(KEY))||[];}
+function guardar(d){localStorage.setItem(KEY,JSON.stringify(d));render();}
 
-    function guardarGastos(g){
-        localStorage.setItem(STORAGE_KEY,JSON.stringify(g));
-        actualizarTabla();
-    }
+function render(){
+const data=cargar();
+if(!data.length){tabla.innerHTML="<p>Sin registros</p>";return;}
+let html="<table><tr><th>Fecha</th><th>Empresa</th><th>Monto</th><th>Img</th></tr>";
+data.forEach(g=>{
+html+=`<tr>
+<td>${g.fecha}</td>
+<td>${g.empresa}</td>
+<td>$${g.monto}</td>
+<td>${g.imagen?`<img src="${g.imagen}" class="preview">`:"-"}</td>
+</tr>`;
+});
+html+="</table>";
+tabla.innerHTML=html;
+}
 
-    function mostrarAlerta(m,t){
-        alertContainer.innerHTML = `<div class="alert ${t}">${m}</div>`;
-        setTimeout(()=> alertContainer.innerHTML="",3000);
-    }
+document.getElementById("btnGuardar").onclick=function(){
+if(!fecha.value||!empresa.value||!monto.value){alert("Completa campos");return;}
+const file=imagen.files[0];
+if(file){
+const reader=new FileReader();
+reader.onload=e=>{
+guardar([...cargar(),{
+fecha:fecha.value,
+empresa:empresa.value,
+monto:monto.value,
+imagen:e.target.result
+}]);
+};
+reader.readAsDataURL(file);
+}else{
+guardar([...cargar(),{
+fecha:fecha.value,
+empresa:empresa.value,
+monto:monto.value,
+imagen:null
+}]);
+}
+fecha.value="";empresa.value="";monto.value="";imagen.value="";
+};
 
-    function limpiarFormulario(){
-        fechaInput.value="";
-        tipoGastoInput.value="";
-        tipoDocInput.value="";
-        numDocInput.value="";
-        empresaInput.value="";
-        montoInput.value="";
-        descInput.value="";
-        imgInput.value="";
-    }
+document.getElementById("btnExportar").onclick=async function(){
+const workbook=new ExcelJS.Workbook();
+const sheet=workbook.addWorksheet("Gastos");
+sheet.columns=[
+{header:"Fecha",key:"fecha",width:15},
+{header:"Empresa",key:"empresa",width:20},
+{header:"Monto",key:"monto",width:15},
+{header:"Imagen",key:"imagen",width:25}
+];
 
-    function actualizarTabla(){
-        const gastos = cargarGastos();
-        if(!gastos.length){
-            tablaGastos.innerHTML = "<p>Sin registros</p>";
-            return;
-        }
-        let html=`<table><thead><tr>
-            <th>Fecha</th><th>Tipo</th><th>Doc</th><th>Empresa</th><th>Monto</th><th>Img</th>
-        </tr></thead><tbody>`;
+const data=cargar();
 
-        gastos.forEach(g=>{
-            html += `<tr>
-                <td>${new Date(g.fecha).toLocaleDateString("es-CL")}</td>
-                <td>${g.tipoGasto}</td>
-                <td>${g.tipoDocumento} ${g.numeroDocumento}</td>
-                <td>${g.empresa}</td>
-                <td class="currency">$${g.monto.toLocaleString("es-CL")}</td>
-                <td>${g.imagen?`<img src="${g.imagen}" class="preview">`:"—"}</td>
-            </tr>`;
-        });
+for(let i=0;i<data.length;i++){
+const g=data[i];
+const row=sheet.addRow({fecha:g.fecha,empresa:g.empresa,monto:g.monto});
+if(g.imagen){
+const imgId=workbook.addImage({
+base64:g.imagen,
+extension:'png'
+});
+sheet.addImage(imgId,{
+tl:{col:3,row:i+1},
+ext:{width:80,height:60}
+});
+}
+}
 
-        html += `</tbody></table>`;
-        tablaGastos.innerHTML=html;
-    }
+const buffer=await workbook.xlsx.writeBuffer();
+const blob=new Blob([buffer]);
+const link=document.createElement("a");
+link.href=URL.createObjectURL(blob);
+link.download="Rendicion_con_imagen.xlsx";
+link.click();
+};
 
-    function agregarGasto(){
-        const fecha=fechaInput.value;
-        const tipoGasto=tipoGastoInput.value;
-        const tipoDoc=tipoDocInput.value;
-        const numeroDoc=numDocInput.value;
-        const empresa=empresaInput.value;
-        const monto=parseFloat(montoInput.value);
-
-        if(!fecha||!tipoGasto||!tipoDoc||!numeroDoc||!empresa||isNaN(monto)){
-            mostrarAlerta("Completa campos obligatorios","error");
-            return;
-        }
-
-        const file = imgInput.files && imgInput.files.length>0 ? imgInput.files[0] : null;
-
-        if(file){
-            const reader = new FileReader();
-            reader.onload = e => {
-                guardarGastos([...cargarGastos(), {
-                    id: Date.now(),
-                    fecha,
-                    tipoGasto,
-                    tipoDocumento: tipoDoc,
-                    numeroDocumento: numeroDoc,
-                    empresa,
-                    monto,
-                    descripcion: descInput.value,
-                    imagen: e.target.result
-                }]);
-                limpiarFormulario();
-                mostrarAlerta("Gasto agregado","success");
-            };
-            reader.readAsDataURL(file);
-        } else {
-            guardarGastos([...cargarGastos(), {
-                id:Date.now(),
-                fecha,
-                tipoGasto,
-                tipoDocumento: tipoDoc,
-                numeroDocumento: numeroDoc,
-                empresa,
-                monto,
-                descripcion: descInput.value,
-                imagen:null
-            }]);
-            limpiarFormulario();
-            mostrarAlerta("Gasto agregado","success");
-        }
-    }
-
-    // EVENTOS
-    document.getElementById("btnGuardar").onclick = agregarGasto;
-    document.getElementById("btnLimpiar").onclick = limpiarFormulario;
-    document.getElementById("btnEliminarTodo").onclick = ()=>{
-        localStorage.removeItem(STORAGE_KEY);
-        actualizarTabla();
-    };
-
-    actualizarTabla();
-
+render();
 });
 </script>
 

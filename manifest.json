@@ -1,0 +1,9 @@
+{
+"name": "Rendición de Gastos",
+"short_name": "Rendición",
+"start_url": ".",
+"display": "standalone",
+"background_color": "#ffffff",
+"theme_color": "#1e3a8a",
+"icons": []
+}
