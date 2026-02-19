@@ -8,130 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 
 <style>
-:root{
-    --primary:#0f172a;
-    --accent:#1d4ed8;
-    --success:#16a34a;
-    --danger:#dc2626;
-    --bg:#f1f5f9;
-    --card:#ffffff;
-    --border:#e2e8f0;
-}
-
-body{
-    margin:0;
-    font-family:Segoe UI, Arial, sans-serif;
-    background:var(--bg);
-}
-
-header{
-    background:var(--primary);
-    color:white;
-    padding:15px 25px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-}
-
-.container{
-    padding:20px;
-    max-width:1200px;
-    margin:auto;
-}
-
-.card{
-    background:var(--card);
-    border-radius:12px;
-    padding:20px;
-    margin-bottom:20px;
-    box-shadow:0 4px 12px rgba(0,0,0,.05);
-}
-
-.form-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:15px;
-}
-
-input,select,textarea{
-    padding:12px;
-    border:1px solid var(--border);
-    border-radius:8px;
-    font-size:14px;
-    width:100%;
-    box-sizing:border-box;
-}
-
-.button-group{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-top:15px;
-}
-
-button{
-    padding:12px 18px;
-    border:none;
-    border-radius:8px;
-    font-size:14px;
-    cursor:pointer;
-    font-weight:600;
-}
-
-.btn-primary{background:var(--accent);color:white;}
-.btn-success{background:var(--success);color:white;}
-.btn-danger{background:var(--danger);color:white;}
-.btn-secondary{background:#64748b;color:white;}
-
-.table-wrapper{
-    overflow-x:auto;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th{
-    background:#f8fafc;
-    text-align:left;
-    padding:12px;
-    border-bottom:2px solid var(--border);
-}
-
-td{
-    padding:10px;
-    border-bottom:1px solid var(--border);
-}
-
-.currency{
-    font-weight:bold;
-    color:var(--accent);
-}
-
-img.preview{
-    width:60px;
-    border-radius:6px;
-}
-
-.alert{
-    padding:12px;
-    border-radius:8px;
-    margin-bottom:15px;
-}
-
-.alert.success{background:#dcfce7;}
-.alert.error{background:#fee2e2;}
-
-@media(max-width:768px){
-    .button-group{
-        flex-direction:column;
-    }
-    button{
-        width:100%;
-    }
-}
+/* Mantén tus estilos aquí (igual que antes) */
 </style>
 </head>
 <body>
@@ -142,225 +19,178 @@ img.preview{
 </header>
 
 <div class="container">
+   <div id="alertContainer"></div>
 
-<div id="alertContainer"></div>
+   <div class="card">
+       <h3>Registrar Nuevo Gasto</h3>
+       <div class="form-grid">
+           <input id="fecha" type="date">
+           <select id="tipoGasto">
+               <option value="">Tipo de Gasto</option>
+               <option>Traslado</option>
+               <option>Alimentación</option>
+               <option>Hospedaje</option>
+               <option>Combustible</option>
+               <option>Otros</option>
+           </select>
+           <select id="tipoDocumento">
+               <option value="">Tipo Documento</option>
+               <option>Factura</option>
+               <option>Boleta</option>
+           </select>
+           <input id="numeroDocumento" placeholder="N° Documento">
+           <input id="empresa" placeholder="Empresa">
+           <input id="monto" type="number" placeholder="Monto CLP">
+           <textarea id="descripcion" placeholder="Descripción"></textarea>
+           <input id="imagen" type="file" accept="image/*">
+       </div>
 
-<div class="card">
-    <h3>Registrar Nuevo Gasto</h3>
+       <div class="button-group">
+           <button type="button" id="btnGuardar" class="btn-primary">Guardar</button>
+           <button type="button" id="btnLimpiar" class="btn-secondary">Limpiar</button>
+           <button type="button" id="btnEliminarTodo" class="btn-danger">Eliminar Todo</button>
+       </div>
+   </div>
 
-    <div class="form-grid">
-        <input type="date" id="fecha">
-        <select id="tipoGasto">
-            <option value="">Tipo de Gasto</option>
-            <option>Traslado</option>
-            <option>Alimentación</option>
-            <option>Hospedaje</option>
-            <option>Combustible</option>
-            <option>Otros</option>
-        </select>
-        <select id="tipoDocumento">
-            <option value="">Tipo Documento</option>
-            <option>Factura</option>
-            <option>Boleta</option>
-        </select>
-        <input type="text" id="numeroDocumento" placeholder="N° Documento">
-        <input type="text" id="empresa" placeholder="Empresa">
-        <input type="number" id="monto" placeholder="Monto CLP">
-        <textarea id="descripcion" placeholder="Descripción"></textarea>
-        <input type="file" id="imagen" accept="image/*">
-    </div>
+   <div class="card">
+       <h3>Listado de Gastos</h3>
+       <div id="tablaGastos" class="table-wrapper"></div>
 
-    <div class="button-group">
-        <button type="button" class="btn-primary" id="btnGuardar">Guardar</button>
-        <button type="button" class="btn-secondary" id="btnLimpiar">Limpiar</button>
-        <button type="button" class="btn-danger" id="btnEliminarTodo">Eliminar Todo</button>
-    </div>
-</div>
-
-<div class="card">
-    <h3>Listado de Gastos</h3>
-    <div class="table-wrapper">
-        <div id="tablaGastos"></div>
-    </div>
-
-    <div class="button-group">
-        <button type="button" class="btn-success" id="btnExportar">Exportar Excel con Imágenes</button>
-        <button type="button" class="btn-secondary" id="btnCorreo">Enviar por Correo</button>
-    </div>
-</div>
-
+       <div class="button-group">
+           <button type="button" id="btnExportar" class="btn-success">Exportar Excel con Imágenes</button>
+           <button type="button" id="btnCorreo" class="btn-secondary">Enviar por Correo</button>
+       </div>
+   </div>
 </div>
 
 <script>
-(function(){
+document.addEventListener("DOMContentLoaded", function(){
 
-const STORAGE_KEY="gastos_empresa_stable_v2";
+    // Variables seguras
+    const STORAGE_KEY="gastos_empresa_final_v2";
 
-function qs(id){ return document.getElementById(id); }
+    const fechaInput=document.getElementById("fecha");
+    const tipoGastoInput=document.getElementById("tipoGasto");
+    const tipoDocInput=document.getElementById("tipoDocumento");
+    const numDocInput=document.getElementById("numeroDocumento");
+    const empresaInput=document.getElementById("empresa");
+    const montoInput=document.getElementById("monto");
+    const descInput=document.getElementById("descripcion");
+    const imgInput=document.getElementById("imagen");
+    const tablaGastos=document.getElementById("tablaGastos");
+    const alertContainer=document.getElementById("alertContainer");
 
-function cargarGastos(){
-    try{
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    }catch(e){
-        return [];
-    }
-}
-
-function guardarGastos(g){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(g));
-    actualizarTabla();
-}
-
-function mostrarAlerta(m,t){
-    qs("alertContainer").innerHTML=`<div class="alert ${t}">${m}</div>`;
-    setTimeout(()=>qs("alertContainer").innerHTML="",3000);
-}
-
-function limpiarFormulario(){
-    document.querySelectorAll("input,textarea,select").forEach(el=>{
-        if(el.type!=="file") el.value="";
-    });
-}
-
-function agregarGasto(){
-
-    const fecha=qs("fecha").value.trim();
-    const tipoGasto=qs("tipoGasto").value.trim();
-    const tipoDocumento=qs("tipoDocumento").value.trim();
-    const numeroDocumento=qs("numeroDocumento").value.trim();
-    const empresa=qs("empresa").value.trim();
-    const monto=parseFloat(qs("monto").value);
-    const descripcion=qs("descripcion").value.trim();
-    const imagenInput=qs("imagen");
-
-    if(!fecha||!tipoGasto||!tipoDocumento||!numeroDocumento||!empresa||isNaN(monto)){
-        mostrarAlerta("Completa los campos obligatorios","error");
-        return;
+    function cargarGastos(){
+        return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];
     }
 
-    const imagenFile=(imagenInput.files&&imagenInput.files.length>0)?imagenInput.files[0]:null;
+    function guardarGastos(g){
+        localStorage.setItem(STORAGE_KEY,JSON.stringify(g));
+        actualizarTabla();
+    }
 
-    const guardarFinal=(img=null)=>{
-        const gastos=cargarGastos();
-        gastos.push({
-            id:Date.now(),
-            fecha,tipoGasto,tipoDocumento,
-            numeroDocumento,empresa,
-            monto,descripcion,
-            imagen:img
+    function mostrarAlerta(m,t){
+        alertContainer.innerHTML = `<div class="alert ${t}">${m}</div>`;
+        setTimeout(()=> alertContainer.innerHTML="",3000);
+    }
+
+    function limpiarFormulario(){
+        fechaInput.value="";
+        tipoGastoInput.value="";
+        tipoDocInput.value="";
+        numDocInput.value="";
+        empresaInput.value="";
+        montoInput.value="";
+        descInput.value="";
+        imgInput.value="";
+    }
+
+    function actualizarTabla(){
+        const gastos = cargarGastos();
+        if(!gastos.length){
+            tablaGastos.innerHTML = "<p>Sin registros</p>";
+            return;
+        }
+        let html=`<table><thead><tr>
+            <th>Fecha</th><th>Tipo</th><th>Doc</th><th>Empresa</th><th>Monto</th><th>Img</th>
+        </tr></thead><tbody>`;
+
+        gastos.forEach(g=>{
+            html += `<tr>
+                <td>${new Date(g.fecha).toLocaleDateString("es-CL")}</td>
+                <td>${g.tipoGasto}</td>
+                <td>${g.tipoDocumento} ${g.numeroDocumento}</td>
+                <td>${g.empresa}</td>
+                <td class="currency">$${g.monto.toLocaleString("es-CL")}</td>
+                <td>${g.imagen?`<img src="${g.imagen}" class="preview">`:"—"}</td>
+            </tr>`;
         });
-        guardarGastos(gastos);
-        limpiarFormulario();
-        mostrarAlerta("Gasto guardado correctamente","success");
+
+        html += `</tbody></table>`;
+        tablaGastos.innerHTML=html;
+    }
+
+    function agregarGasto(){
+        const fecha=fechaInput.value;
+        const tipoGasto=tipoGastoInput.value;
+        const tipoDoc=tipoDocInput.value;
+        const numeroDoc=numDocInput.value;
+        const empresa=empresaInput.value;
+        const monto=parseFloat(montoInput.value);
+
+        if(!fecha||!tipoGasto||!tipoDoc||!numeroDoc||!empresa||isNaN(monto)){
+            mostrarAlerta("Completa campos obligatorios","error");
+            return;
+        }
+
+        const file = imgInput.files && imgInput.files.length>0 ? imgInput.files[0] : null;
+
+        if(file){
+            const reader = new FileReader();
+            reader.onload = e => {
+                guardarGastos([...cargarGastos(), {
+                    id: Date.now(),
+                    fecha,
+                    tipoGasto,
+                    tipoDocumento: tipoDoc,
+                    numeroDocumento: numeroDoc,
+                    empresa,
+                    monto,
+                    descripcion: descInput.value,
+                    imagen: e.target.result
+                }]);
+                limpiarFormulario();
+                mostrarAlerta("Gasto agregado","success");
+            };
+            reader.readAsDataURL(file);
+        } else {
+            guardarGastos([...cargarGastos(), {
+                id:Date.now(),
+                fecha,
+                tipoGasto,
+                tipoDocumento: tipoDoc,
+                numeroDocumento: numeroDoc,
+                empresa,
+                monto,
+                descripcion: descInput.value,
+                imagen:null
+            }]);
+            limpiarFormulario();
+            mostrarAlerta("Gasto agregado","success");
+        }
+    }
+
+    // EVENTOS
+    document.getElementById("btnGuardar").onclick = agregarGasto;
+    document.getElementById("btnLimpiar").onclick = limpiarFormulario;
+    document.getElementById("btnEliminarTodo").onclick = ()=>{
+        localStorage.removeItem(STORAGE_KEY);
+        actualizarTabla();
     };
 
-    if(imagenFile){
-        const reader=new FileReader();
-        reader.onload=e=>guardarFinal(e.target.result);
-        reader.readAsDataURL(imagenFile);
-    }else{
-        guardarFinal();
-    }
-}
-
-function actualizarTabla(){
-    const gastos=cargarGastos();
-    const cont=qs("tablaGastos");
-
-    if(!gastos.length){
-        cont.innerHTML="<p>Sin registros</p>";
-        return;
-    }
-
-    let total=0;
-    let html="<table><thead><tr><th>Fecha</th><th>Tipo</th><th>Doc</th><th>Empresa</th><th>Monto</th><th>Img</th></tr></thead><tbody>";
-
-    gastos.forEach(g=>{
-        total+=g.monto;
-        html+=`
-        <tr>
-            <td>${new Date(g.fecha).toLocaleDateString("es-CL")}</td>
-            <td>${g.tipoGasto}</td>
-            <td>${g.tipoDocumento} ${g.numeroDocumento}</td>
-            <td>${g.empresa}</td>
-            <td class="currency">$${g.monto.toLocaleString("es-CL")}</td>
-            <td>${g.imagen?`<img src="${g.imagen}" class="preview">`:"—"}</td>
-        </tr>`;
-    });
-
-    html+=`</tbody></table><h3>Total: $${total.toLocaleString("es-CL")}</h3>`;
-    cont.innerHTML=html;
-}
-
-async function exportarExcel(){
-    const gastos=cargarGastos();
-    if(!gastos.length){
-        mostrarAlerta("No hay datos para exportar","error");
-        return;
-    }
-
-    const workbook=new ExcelJS.Workbook();
-    const ws=workbook.addWorksheet("Rendición");
-
-    ws.columns=[
-        {header:"Fecha",key:"fecha",width:15},
-        {header:"Tipo",key:"tipo",width:20},
-        {header:"Documento",key:"doc",width:25},
-        {header:"Empresa",key:"empresa",width:25},
-        {header:"Monto",key:"monto",width:15},
-        {header:"Descripción",key:"desc",width:30}
-    ];
-
-    ws.getRow(1).font={bold:true};
-
-    gastos.forEach(g=>{
-        ws.addRow({
-            fecha:new Date(g.fecha).toLocaleDateString("es-CL"),
-            tipo:g.tipoGasto,
-            doc:g.tipoDocumento+" "+g.numeroDocumento,
-            empresa:g.empresa,
-            monto:g.monto,
-            desc:g.descripcion||""
-        });
-    });
-
-    const buffer=await workbook.xlsx.writeBuffer();
-    const blob=new Blob([buffer],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
-    const link=document.createElement("a");
-    link.href=URL.createObjectURL(blob);
-    link.download="Rendicion_Gastos.xlsx";
-    link.click();
-}
-
-function enviarCorreo(){
-    const gastos=cargarGastos();
-    if(!gastos.length){
-        mostrarAlerta("No hay gastos para enviar","error");
-        return;
-    }
-
-    const total=gastos.reduce((s,g)=>s+g.monto,0);
-
-    const asunto="Rendición de Gastos";
-    const cuerpo=`Adjunto envío la rendición de gastos.\n\nTotal: $${total.toLocaleString("es-CL")}`;
-
-    window.location.href=`mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
-}
-
-document.addEventListener("DOMContentLoaded",()=>{
-    qs("fecha").value=new Date().toISOString().split("T")[0];
-    qs("fechaActual").innerText=new Date().toLocaleDateString("es-CL");
-
     actualizarTabla();
 
-    qs("btnGuardar").onclick=agregarGasto;
-    qs("btnLimpiar").onclick=limpiarFormulario;
-    qs("btnEliminarTodo").onclick=()=>{localStorage.removeItem(STORAGE_KEY);actualizarTabla();};
-    qs("btnExportar").onclick=exportarExcel;
-    qs("btnCorreo").onclick=enviarCorreo;
 });
-
-})();
 </script>
 
 </body>
