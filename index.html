@@ -192,21 +192,28 @@ img.preview{
 </div>
 
 <script>
-const STORAGE_KEY="gastos_empresa_final_v1";
+(function(){
+
+const STORAGE_KEY="gastos_empresa_stable_v2";
+
+function qs(id){ return document.getElementById(id); }
 
 function cargarGastos(){
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    try{
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    }catch(e){
+        return [];
+    }
 }
 
-function guardarGastos(gastos){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(gastos));
+function guardarGastos(g){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(g));
     actualizarTabla();
 }
 
-function mostrarAlerta(msg,tipo){
-    const c=document.getElementById("alertContainer");
-    c.innerHTML=`<div class="alert ${tipo}">${msg}</div>`;
-    setTimeout(()=>c.innerHTML="",3000);
+function mostrarAlerta(m,t){
+    qs("alertContainer").innerHTML=`<div class="alert ${t}">${m}</div>`;
+    setTimeout(()=>qs("alertContainer").innerHTML="",3000);
 }
 
 function limpiarFormulario(){
@@ -217,21 +224,21 @@ function limpiarFormulario(){
 
 function agregarGasto(){
 
-    const fecha=document.getElementById("fecha").value;
-    const tipoGasto=document.getElementById("tipoGasto").value;
-    const tipoDocumento=document.getElementById("tipoDocumento").value;
-    const numeroDocumento=document.getElementById("numeroDocumento").value;
-    const empresa=document.getElementById("empresa").value;
-    const monto=parseFloat(document.getElementById("monto").value);
-    const descripcion=document.getElementById("descripcion").value;
-    const imagenInput=document.getElementById("imagen");
+    const fecha=qs("fecha").value.trim();
+    const tipoGasto=qs("tipoGasto").value.trim();
+    const tipoDocumento=qs("tipoDocumento").value.trim();
+    const numeroDocumento=qs("numeroDocumento").value.trim();
+    const empresa=qs("empresa").value.trim();
+    const monto=parseFloat(qs("monto").value);
+    const descripcion=qs("descripcion").value.trim();
+    const imagenInput=qs("imagen");
 
     if(!fecha||!tipoGasto||!tipoDocumento||!numeroDocumento||!empresa||isNaN(monto)){
         mostrarAlerta("Completa los campos obligatorios","error");
         return;
     }
 
-    const imagenFile = imagenInput.files && imagenInput.files.length>0 ? imagenInput.files[0] : null;
+    const imagenFile=(imagenInput.files&&imagenInput.files.length>0)?imagenInput.files[0]:null;
 
     const guardarFinal=(img=null)=>{
         const gastos=cargarGastos();
@@ -258,7 +265,7 @@ function agregarGasto(){
 
 function actualizarTabla(){
     const gastos=cargarGastos();
-    const cont=document.getElementById("tablaGastos");
+    const cont=qs("tablaGastos");
 
     if(!gastos.length){
         cont.innerHTML="<p>Sin registros</p>";
@@ -301,15 +308,12 @@ async function exportarExcel(){
         {header:"Documento",key:"doc",width:25},
         {header:"Empresa",key:"empresa",width:25},
         {header:"Monto",key:"monto",width:15},
-        {header:"Descripción",key:"desc",width:30},
-        {header:"Imagen",key:"img",width:20}
+        {header:"Descripción",key:"desc",width:30}
     ];
 
     ws.getRow(1).font={bold:true};
 
-    let rowIndex=2;
-
-    for(const g of gastos){
+    gastos.forEach(g=>{
         ws.addRow({
             fecha:new Date(g.fecha).toLocaleDateString("es-CL"),
             tipo:g.tipoGasto,
@@ -318,25 +322,7 @@ async function exportarExcel(){
             monto:g.monto,
             desc:g.descripcion||""
         });
-
-        ws.getRow(rowIndex).getCell(5).numFmt='"$"#,##0';
-
-        if(g.imagen){
-            const imageId=workbook.addImage({
-                base64:g.imagen.split(",")[1],
-                extension:g.imagen.includes("png")?"png":"jpeg"
-            });
-
-            ws.addImage(imageId,{
-                tl:{col:6,row:rowIndex-1},
-                ext:{width:80,height:80}
-            });
-
-            ws.getRow(rowIndex).height=60;
-        }
-
-        rowIndex++;
-    }
+    });
 
     const buffer=await workbook.xlsx.writeBuffer();
     const blob=new Blob([buffer],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
@@ -353,31 +339,28 @@ function enviarCorreo(){
         return;
     }
 
-    const total=gastos.reduce((sum,g)=>sum+g.monto,0);
+    const total=gastos.reduce((s,g)=>s+g.monto,0);
 
     const asunto="Rendición de Gastos";
-    const cuerpo=`Adjunto envío la rendición de gastos.
-
-Total rendido: $${total.toLocaleString("es-CL")}`;
+    const cuerpo=`Adjunto envío la rendición de gastos.\n\nTotal: $${total.toLocaleString("es-CL")}`;
 
     window.location.href=`mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
-    document.getElementById("fecha").value=new Date().toISOString().split("T")[0];
-    document.getElementById("fechaActual").innerText=new Date().toLocaleDateString("es-CL");
+    qs("fecha").value=new Date().toISOString().split("T")[0];
+    qs("fechaActual").innerText=new Date().toLocaleDateString("es-CL");
 
     actualizarTabla();
 
-    document.getElementById("btnGuardar").addEventListener("click",agregarGasto);
-    document.getElementById("btnLimpiar").addEventListener("click",limpiarFormulario);
-    document.getElementById("btnEliminarTodo").addEventListener("click",()=>{
-        localStorage.removeItem(STORAGE_KEY);
-        actualizarTabla();
-    });
-    document.getElementById("btnExportar").addEventListener("click",exportarExcel);
-    document.getElementById("btnCorreo").addEventListener("click",enviarCorreo);
+    qs("btnGuardar").onclick=agregarGasto;
+    qs("btnLimpiar").onclick=limpiarFormulario;
+    qs("btnEliminarTodo").onclick=()=>{localStorage.removeItem(STORAGE_KEY);actualizarTabla();};
+    qs("btnExportar").onclick=exportarExcel;
+    qs("btnCorreo").onclick=enviarCorreo;
 });
+
+})();
 </script>
 
 </body>
