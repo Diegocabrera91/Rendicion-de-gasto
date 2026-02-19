@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rendición de Gastos Empresarial</title>
+
+<script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+
+<style>
+:root{
+    --primary:#0f172a;
+    --accent:#1d4ed8;
+    --success:#16a34a;
+    --danger:#dc2626;
+    --bg:#f1f5f9;
+    --card:#ffffff;
+    --border:#e2e8f0;
+}
+
+body{
+    margin:0;
+    font-family:Segoe UI, Arial, sans-serif;
+    background:var(--bg);
+}
+
+header{
+    background:var(--primary);
+    color:white;
+    padding:15px 25px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.container{
+    padding:20px;
+    max-width:1200px;
+    margin:auto;
+}
+
+.card{
+    background:var(--card);
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+}
+
+input,select,textarea{
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:14px;
+    width:100%;
+    box-sizing:border-box;
+}
+
+.button-group{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:15px;
+}
+
+button{
+    padding:12px 18px;
+    border:none;
+    border-radius:8px;
+    font-size:14px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.btn-primary{background:var(--accent);color:white;}
+.btn-success{background:var(--success);color:white;}
+.btn-danger{background:var(--danger);color:white;}
+.btn-secondary{background:#64748b;color:white;}
+
+.table-wrapper{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#f8fafc;
+    text-align:left;
+    padding:12px;
+    border-bottom:2px solid var(--border);
+}
+
+td{
+    padding:10px;
+    border-bottom:1px solid var(--border);
+}
+
+.currency{
+    font-weight:bold;
+    color:var(--accent);
+}
+
+img.preview{
+    width:60px;
+    border-radius:6px;
+}
+
+.alert{
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+
+.alert.success{background:#dcfce7;}
+.alert.error{background:#fee2e2;}
+
+@media(max-width:768px){
+    .button-group{
+        flex-direction:column;
+    }
+    button{
+        width:100%;
+    }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h2>Rendición de Gastos Empresarial</h2>
+    <div id="fechaActual"></div>
+</header>
+
+<div class="container">
+
+<div id="alertContainer"></div>
+
+<div class="card">
+    <h3>Registrar Nuevo Gasto</h3>
+
+    <div class="form-grid">
+        <input type="date" id="fecha">
+        <select id="tipoGasto">
+            <option value="">Tipo de Gasto</option>
+            <option>Traslado</option>
+            <option>Alimentación</option>
+            <option>Hospedaje</option>
+            <option>Combustible</option>
+            <option>Otros</option>
+        </select>
+        <select id="tipoDocumento">
+            <option value="">Tipo Documento</option>
+            <option>Factura</option>
+            <option>Boleta</option>
+        </select>
+        <input type="text" id="numeroDocumento" placeholder="N° Documento">
+        <input type="text" id="empresa" placeholder="Empresa">
+        <input type="number" id="monto" placeholder="Monto CLP">
+        <textarea id="descripcion" placeholder="Descripción"></textarea>
+        <input type="file" id="imagen" accept="image/*">
+    </div>
+
+    <div class="button-group">
+        <button type="button" class="btn-primary" id="btnGuardar">Guardar</button>
+        <button type="button" class="btn-secondary" id="btnLimpiar">Limpiar</button>
+        <button type="button" class="btn-danger" id="btnEliminarTodo">Eliminar Todo</button>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Listado de Gastos</h3>
+    <div class="table-wrapper">
+        <div id="tablaGastos"></div>
+    </div>
+
+    <div class="button-group">
+        <button type="button" class="btn-success" id="btnExportar">Exportar Excel con Imágenes</button>
+        <button type="button" class="btn-secondary" id="btnCorreo">Enviar por Correo</button>
+    </div>
+</div>
+
+</div>
+
+<script>
+const STORAGE_KEY="gastos_empresa_final_v1";
+
+function cargarGastos(){
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+}
+
+function guardarGastos(gastos){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(gastos));
+    actualizarTabla();
+}
+
+function mostrarAlerta(msg,tipo){
+    const c=document.getElementById("alertContainer");
+    c.innerHTML=`<div class="alert ${tipo}">${msg}</div>`;
+    setTimeout(()=>c.innerHTML="",3000);
+}
+
+function limpiarFormulario(){
+    document.querySelectorAll("input,textarea,select").forEach(el=>{
+        if(el.type!=="file") el.value="";
+    });
+}
+
+function agregarGasto(){
+
+    const fecha=document.getElementById("fecha").value;
+    const tipoGasto=document.getElementById("tipoGasto").value;
+    const tipoDocumento=document.getElementById("tipoDocumento").value;
+    const numeroDocumento=document.getElementById("numeroDocumento").value;
+    const empresa=document.getElementById("empresa").value;
+    const monto=parseFloat(document.getElementById("monto").value);
+    const descripcion=document.getElementById("descripcion").value;
+    const imagenInput=document.getElementById("imagen");
+
+    if(!fecha||!tipoGasto||!tipoDocumento||!numeroDocumento||!empresa||isNaN(monto)){
+        mostrarAlerta("Completa los campos obligatorios","error");
+        return;
+    }
+
+    const imagenFile = imagenInput.files && imagenInput.files.length>0 ? imagenInput.files[0] : null;
+
+    const guardarFinal=(img=null)=>{
+        const gastos=cargarGastos();
+        gastos.push({
+            id:Date.now(),
+            fecha,tipoGasto,tipoDocumento,
+            numeroDocumento,empresa,
+            monto,descripcion,
+            imagen:img
+        });
+        guardarGastos(gastos);
+        limpiarFormulario();
+        mostrarAlerta("Gasto guardado correctamente","success");
+    };
+
+    if(imagenFile){
+        const reader=new FileReader();
+        reader.onload=e=>guardarFinal(e.target.result);
+        reader.readAsDataURL(imagenFile);
+    }else{
+        guardarFinal();
+    }
+}
+
+function actualizarTabla(){
+    const gastos=cargarGastos();
+    const cont=document.getElementById("tablaGastos");
+
+    if(!gastos.length){
+        cont.innerHTML="<p>Sin registros</p>";
+        return;
+    }
+
+    let total=0;
+    let html="<table><thead><tr><th>Fecha</th><th>Tipo</th><th>Doc</th><th>Empresa</th><th>Monto</th><th>Img</th></tr></thead><tbody>";
+
+    gastos.forEach(g=>{
+        total+=g.monto;
+        html+=`
+        <tr>
+            <td>${new Date(g.fecha).toLocaleDateString("es-CL")}</td>
+            <td>${g.tipoGasto}</td>
+            <td>${g.tipoDocumento} ${g.numeroDocumento}</td>
+            <td>${g.empresa}</td>
+            <td class="currency">$${g.monto.toLocaleString("es-CL")}</td>
+            <td>${g.imagen?`<img src="${g.imagen}" class="preview">`:"—"}</td>
+        </tr>`;
+    });
+
+    html+=`</tbody></table><h3>Total: $${total.toLocaleString("es-CL")}</h3>`;
+    cont.innerHTML=html;
+}
+
+async function exportarExcel(){
+    const gastos=cargarGastos();
+    if(!gastos.length){
+        mostrarAlerta("No hay datos para exportar","error");
+        return;
+    }
+
+    const workbook=new ExcelJS.Workbook();
+    const ws=workbook.addWorksheet("Rendición");
+
+    ws.columns=[
+        {header:"Fecha",key:"fecha",width:15},
+        {header:"Tipo",key:"tipo",width:20},
+        {header:"Documento",key:"doc",width:25},
+        {header:"Empresa",key:"empresa",width:25},
+        {header:"Monto",key:"monto",width:15},
+        {header:"Descripción",key:"desc",width:30},
+        {header:"Imagen",key:"img",width:20}
+    ];
+
+    ws.getRow(1).font={bold:true};
+
+    let rowIndex=2;
+
+    for(const g of gastos){
+        ws.addRow({
+            fecha:new Date(g.fecha).toLocaleDateString("es-CL"),
+            tipo:g.tipoGasto,
+            doc:g.tipoDocumento+" "+g.numeroDocumento,
+            empresa:g.empresa,
+            monto:g.monto,
+            desc:g.descripcion||""
+        });
+
+        ws.getRow(rowIndex).getCell(5).numFmt='"$"#,##0';
+
+        if(g.imagen){
+            const imageId=workbook.addImage({
+                base64:g.imagen.split(",")[1],
+                extension:g.imagen.includes("png")?"png":"jpeg"
+            });
+
+            ws.addImage(imageId,{
+                tl:{col:6,row:rowIndex-1},
+                ext:{width:80,height:80}
+            });
+
+            ws.getRow(rowIndex).height=60;
+        }
+
+        rowIndex++;
+    }
+
+    const buffer=await workbook.xlsx.writeBuffer();
+    const blob=new Blob([buffer],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    const link=document.createElement("a");
+    link.href=URL.createObjectURL(blob);
+    link.download="Rendicion_Gastos.xlsx";
+    link.click();
+}
+
+function enviarCorreo(){
+    const gastos=cargarGastos();
+    if(!gastos.length){
+        mostrarAlerta("No hay gastos para enviar","error");
+        return;
+    }
+
+    const total=gastos.reduce((sum,g)=>sum+g.monto,0);
+
+    const asunto="Rendición de Gastos";
+    const cuerpo=`Adjunto envío la rendición de gastos.
+
+Total rendido: $${total.toLocaleString("es-CL")}`;
+
+    window.location.href=`mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+    document.getElementById("fecha").value=new Date().toISOString().split("T")[0];
+    document.getElementById("fechaActual").innerText=new Date().toLocaleDateString("es-CL");
+
+    actualizarTabla();
+
+    document.getElementById("btnGuardar").addEventListener("click",agregarGasto);
+    document.getElementById("btnLimpiar").addEventListener("click",limpiarFormulario);
+    document.getElementById("btnEliminarTodo").addEventListener("click",()=>{
+        localStorage.removeItem(STORAGE_KEY);
+        actualizarTabla();
+    });
+    document.getElementById("btnExportar").addEventListener("click",exportarExcel);
+    document.getElementById("btnCorreo").addEventListener("click",enviarCorreo);
+});
+</script>
+
+</body>
+</html>
