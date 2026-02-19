@@ -6,40 +6,51 @@
 <title>TOOLTEK SPA - Rendición de Gastos</title>
 
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e3a8a">
+<meta name="theme-color" content="#1a5a8e">
 
 <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 
 <style>
-body{font-family:Arial;margin:0;background:#f4f6f9}
-header{background:#1e3a8a;color:white;padding:20px;text-align:center}
-header img{height:120px;max-width:90%;object-fit:contain}
+body{font-family:'Segoe UI',Arial,sans-serif;margin:0;background:#f5f7fa}
+header{background:linear-gradient(135deg, #1a5a8e 0%, #00a8cc 100%);color:white;padding:25px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1)}
+header img{height:120px;max-width:90%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2))}
+header p{margin:10px 0 0 0;font-size:16px;font-weight:300;letter-spacing:0.5px}
 .container{padding:20px;max-width:1100px;margin:auto}
-.card{background:white;padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-input,select,textarea{width:100%;padding:12px;margin:5px 0 10px;border-radius:5px;border:1px solid #ccc;box-sizing:border-box;font-size:16px;-webkit-appearance:none}
-select{background-color:white;background-image:url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="12" height="8"%3E%3Cpath fill="%23333" d="M0 0l6 8 6-8z"/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
-button{padding:12px 20px;border:none;border-radius:6px;cursor:pointer;margin:5px 0;font-size:16px;width:100%;touch-action:manipulation}
-.btn-primary{background:#2563eb;color:white}
-.btn-success{background:#16a34a;color:white}
-.btn-danger{background:#dc2626;color:white}
+.card{background:white;padding:25px;border-radius:12px;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08);border-top:4px solid #00a8cc}
+.card h3{color:#1a5a8e;margin-top:0;font-size:20px;font-weight:600;border-bottom:2px solid #f0f0f0;padding-bottom:10px}
+input,select,textarea{width:100%;padding:12px;margin:5px 0 10px;border-radius:8px;border:1.5px solid #d1d5db;box-sizing:border-box;font-size:16px;-webkit-appearance:none;transition:border-color 0.3s,box-shadow 0.3s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#00a8cc;box-shadow:0 0 0 3px rgba(0,168,204,0.1)}
+select{background-color:white;background-image:url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="12" height="8"%3E%3Cpath fill="%231a5a8e" d="M0 0l6 8 6-8z"/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 12px center;padding-right:35px}
+button{padding:14px 24px;border:none;border-radius:8px;cursor:pointer;margin:5px 0;font-size:16px;font-weight:600;width:100%;touch-action:manipulation;transition:transform 0.2s,box-shadow 0.2s}
+button:active{transform:scale(0.98)}
+.btn-primary{background:linear-gradient(135deg, #1a5a8e 0%, #00a8cc 100%);color:white;box-shadow:0 4px 6px rgba(26,90,142,0.3)}
+.btn-primary:hover{box-shadow:0 6px 12px rgba(26,90,142,0.4)}
+.btn-success{background:#10b981;color:white;box-shadow:0 4px 6px rgba(16,185,129,0.3)}
+.btn-success:hover{box-shadow:0 6px 12px rgba(16,185,129,0.4)}
+.btn-danger{background:#ef4444;color:white;box-shadow:0 4px 6px rgba(239,68,68,0.3)}
+.btn-danger:hover{box-shadow:0 6px 12px rgba(239,68,68,0.4)}
 .hidden{display:none}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{border:1px solid #ddd;padding:8px;text-align:left}
-.preview{width:60px;border-radius:6px}
-@media(max-width:600px){.container{padding:10px}table{font-size:12px}th,td{padding:5px}header img{height:100px}}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:15px}
+th{background:linear-gradient(135deg, #1a5a8e 0%, #00a8cc 100%);color:white;padding:12px 8px;text-align:left;font-weight:600;border:none}
+td{border:1px solid #e5e7eb;padding:10px 8px}
+tr:nth-child(even){background:#f9fafb}
+tr:hover{background:#f3f4f6}
+.preview{width:60px;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+#tabla h3{color:#1a5a8e;font-size:22px;margin-top:20px;padding:15px;background:#f0f9ff;border-radius:8px;border-left:5px solid #00a8cc}
+@media(max-width:600px){.container{padding:10px}.card{padding:18px}table{font-size:12px}th,td{padding:6px}header img{height:100px}header p{font-size:14px}}
 </style>
 </head>
 <body>
 
 <header>
-<img src="logo.png" alt="Logo">
+<img src="logo.png" alt="TOOLTEK">
 <p>Sistema de Rendición de Gastos</p>
 </header>
 
 <div class="container">
 
 <div class="card">
-<h3>Registrar Gasto</h3>
+<h3>✏️ Registrar Gasto</h3>
 <input id="fecha" type="date">
 
 <select id="tipoGasto">
@@ -64,14 +75,14 @@ th,td{border:1px solid #ddd;padding:8px;text-align:left}
 <input id="monto" type="number" placeholder="Monto CLP" inputmode="numeric">
 <textarea id="descripcion" placeholder="Descripción" rows="3"></textarea>
 <input id="imagen" type="file" accept="image/*" capture="environment">
-<button id="btnGuardar" class="btn-primary">Guardar Gasto</button>
-<button id="btnEliminarTodo" class="btn-danger">Eliminar Todo</button>
+<button id="btnGuardar" class="btn-primary">✔ Guardar Gasto</button>
+<button id="btnEliminarTodo" class="btn-danger">🗑️ Eliminar Todo</button>
 </div>
 
 <div class="card">
-<h3>Listado de Gastos</h3>
+<h3>📋 Listado de Gastos</h3>
 <div id="tabla"></div>
-<button id="btnExportar" class="btn-success">Exportar Excel Oficial</button>
+<button id="btnExportar" class="btn-success">📄 Exportar Excel Oficial</button>
 </div>
 
 </div>
@@ -107,21 +118,21 @@ return dv===dvCalculado;
 
 function render(){
 const data=cargar();
-if(!data.length){document.getElementById("tabla").innerHTML="<p>Sin registros</p>";return;}
+if(!data.length){document.getElementById("tabla").innerHTML="<p style='text-align:center;color:#6b7280;padding:20px'>Sin registros aún. Comience agregando un gasto.</p>";return;}
 let total=0;
-let html="<table><tr><th>Fecha</th><th>Tipo</th><th>Doc</th><th>Empresa</th><th>Monto</th><th>Img</th></tr>";
+let html="<table><thead><tr><th>Fecha</th><th>Tipo de Gasto</th><th>Documento</th><th>Empresa</th><th>Monto</th><th>Comprobante</th></tr></thead><tbody>";
 data.forEach(g=>{
 total+=parseFloat(g.monto);
 html+=`<tr>
 <td>${g.fecha}</td>
 <td>${g.tipoGasto}</td>
-<td>${g.tipoDocumento} ${g.numeroDocumento}${g.rut?' RUT:'+g.rut:''}</td>
+<td>${g.tipoDocumento} ${g.numeroDocumento}${g.rut?' <br><small>RUT: '+g.rut+'</small>':''}</td>
 <td>${g.empresa}</td>
-<td>$${Number(g.monto).toLocaleString("es-CL")}</td>
-<td>${g.imagen?`<img src="${g.imagen}" class="preview">`:"-"}</td>
+<td style="text-align:right;font-weight:600">$${Number(g.monto).toLocaleString("es-CL")}</td>
+<td style="text-align:center">${g.imagen?`<img src="${g.imagen}" class="preview">`:"-"}</td>
 </tr>`;
 });
-html+=`</table><h3>Total: $${total.toLocaleString("es-CL")}</h3>`;
+html+=`</tbody></table><h3>💰 Total: $${total.toLocaleString("es-CL")}</h3>`;
 document.getElementById("tabla").innerHTML=html;
 }
 
@@ -150,14 +161,14 @@ const emp=document.getElementById("empresa").value;
 const m=document.getElementById("monto").value;
 const d=document.getElementById("descripcion").value;
 
-if(!f){alert("Seleccione una fecha");return;}
-if(!tg){alert("Seleccione tipo de gasto");return;}
-if(!td){alert("Seleccione tipo de documento");return;}
-if(td==="Factura"&&!rut){alert("Ingrese RUT para Factura");return;}
-if(td==="Factura"&&!validarRUT(rut)){alert("RUT inválido. Formato: 12345678-9");return;}
-if(!nd){alert("Ingrese número de documento");return;}
-if(!emp){alert("Ingrese proveedor/empresa");return;}
-if(!m||m<=0){alert("Ingrese monto válido");return;}
+if(!f){alert("⚠️ Seleccione una fecha");return;}
+if(!tg){alert("⚠️ Seleccione tipo de gasto");return;}
+if(!td){alert("⚠️ Seleccione tipo de documento");return;}
+if(td==="Factura"&&!rut){alert("⚠️ Ingrese RUT para Factura");return;}
+if(td==="Factura"&&!validarRUT(rut)){alert("❌ RUT inválido. Formato: 12345678-9");return;}
+if(!nd){alert("⚠️ Ingrese número de documento");return;}
+if(!emp){alert("⚠️ Ingrese proveedor/empresa");return;}
+if(!m||m<=0){alert("⚠️ Ingrese monto válido");return;}
 
 const file=document.getElementById("imagen").files[0];
 if(file){
@@ -165,11 +176,13 @@ const reader=new FileReader();
 reader.onload=function(ev){
 guardar([...cargar(),{fecha:f,tipoGasto:tg,tipoDocumento:td,numeroDocumento:nd,empresa:emp,monto:m,descripcion:d,rut:td==="Factura"?rut:null,imagen:ev.target.result}]);
 limpiarFormulario();
+alert("✅ Gasto registrado exitosamente");
 };
 reader.readAsDataURL(file);
 }else{
 guardar([...cargar(),{fecha:f,tipoGasto:tg,tipoDocumento:td,numeroDocumento:nd,empresa:emp,monto:m,descripcion:d,rut:td==="Factura"?rut:null,imagen:null}]);
 limpiarFormulario();
+alert("✅ Gasto registrado exitosamente");
 }
 },false);
 
@@ -187,13 +200,17 @@ document.getElementById("imagen").value='';
 }
 
 document.getElementById("btnEliminarTodo").addEventListener('click',function(){
-if(confirm('¿Está seguro de eliminar todos los gastos registrados?')){
+if(confirm('⚠️ ¿Está seguro de eliminar todos los gastos registrados? Esta acción no se puede deshacer.')){
 localStorage.removeItem(KEY);
 render();
+alert("✅ Todos los registros han sido eliminados");
 }
 },false);
 
 document.getElementById("btnExportar").addEventListener('click',async function(){
+const data=cargar();
+if(!data.length){alert("⚠️ No hay gastos para exportar");return;}
+
 const workbook=new ExcelJS.Workbook();
 const sheet=workbook.addWorksheet("Rendición TOOLTEK");
 
@@ -203,7 +220,6 @@ sheet.addImage(logoId,'A1:D4');
 sheet.addRow([]);
 sheet.addRow(["Fecha","Tipo Gasto","Tipo Doc","Nº Documento","RUT","Empresa","Monto","Descripción"]);
 
-const data=cargar();
 let rowIndex=6;
 
 for(let i=0;i<data.length;i++){
@@ -222,8 +238,9 @@ const buffer=await workbook.xlsx.writeBuffer();
 const blob=new Blob([buffer]);
 const link=document.createElement("a");
 link.href=URL.createObjectURL(blob);
-link.download="Rendicion_TOOLTEK_SPA.xlsx";
+link.download="Rendicion_TOOLTEK_SPA_"+new Date().toISOString().split('T')[0]+".xlsx";
 link.click();
+alert("✅ Excel exportado exitosamente");
 },false);
 
 render();
