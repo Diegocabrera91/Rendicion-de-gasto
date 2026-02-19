@@ -16,15 +16,17 @@ header{background:#1e3a8a;color:white;padding:15px;text-align:center}
 header img{height:60px}
 .container{padding:20px;max-width:1100px;margin:auto}
 .card{background:white;padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-input,select,textarea{width:100%;padding:8px;margin:5px 0 10px;border-radius:5px;border:1px solid #ccc}
-button{padding:10px 15px;border:none;border-radius:6px;cursor:pointer;margin:5px 0}
+input,select,textarea{width:100%;padding:12px;margin:5px 0 10px;border-radius:5px;border:1px solid #ccc;box-sizing:border-box;font-size:16px;-webkit-appearance:none}
+select{background-color:white;background-image:url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="12" height="8"%3E%3Cpath fill="%23333" d="M0 0l6 8 6-8z"/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+button{padding:12px 20px;border:none;border-radius:6px;cursor:pointer;margin:5px 0;font-size:16px;width:100%;touch-action:manipulation}
 .btn-primary{background:#2563eb;color:white}
 .btn-success{background:#16a34a;color:white}
 .btn-danger{background:#dc2626;color:white}
-table{width:100%;border-collapse:collapse}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{border:1px solid #ddd;padding:8px;text-align:left}
 .preview{width:60px;border-radius:6px}
-@media(max-width:600px){.container{padding:10px}}
+@media(max-width:600px){.container{padding:10px}table{font-size:12px}th,td{padding:5px}}
 </style>
 </head>
 <body>
@@ -40,19 +42,35 @@ th,td{border:1px solid #ddd;padding:8px;text-align:left}
 <div class="card">
 <h3>Registrar Gasto</h3>
 <input id="fecha" type="date">
-<input id="tipoGasto" placeholder="Tipo de Gasto">
-<input id="tipoDocumento" placeholder="Tipo Documento">
-<input id="numeroDocumento" placeholder="Número Documento">
-<input id="empresa" placeholder="Proveedor / Empresa">
-<input id="monto" type="number" placeholder="Monto CLP">
-<textarea id="descripcion" placeholder="Descripción"></textarea>
-<input id="imagen" type="file" accept="image/*">
-<button id="btnGuardar" class="btn-primary">Guardar</button>
+
+<select id="tipoGasto">
+<option value="">Seleccione Tipo de Gasto</option>
+<option value="Gastos de Traslado por Representacion">Gastos de Traslado por Representacion</option>
+<option value="Gastos de Alimentacion por Representacion">Gastos de Alimentacion por Representacion</option>
+<option value="Gastos de Hospedaje por Representacion">Gastos de Hospedaje por Representacion</option>
+<option value="Gastos de Vehiculo por Representacion">Gastos de Vehiculo por Representacion</option>
+<option value="Gastos de Combustible por Representacion">Gastos de Combustible por Representacion</option>
+<option value="Otros Gastos por Representacion">Otros Gastos por Representacion</option>
+</select>
+
+<select id="tipoDocumento">
+<option value="">Seleccione Tipo de Documento</option>
+<option value="Boleta">Boleta</option>
+<option value="Factura">Factura</option>
+</select>
+
+<input id="rut" type="text" placeholder="RUT (solo para Factura)" class="hidden">
+<input id="numeroDocumento" type="text" placeholder="Número Documento">
+<input id="empresa" type="text" placeholder="Proveedor / Empresa">
+<input id="monto" type="number" placeholder="Monto CLP" inputmode="numeric">
+<textarea id="descripcion" placeholder="Descripción" rows="3"></textarea>
+<input id="imagen" type="file" accept="image/*" capture="environment">
+<button id="btnGuardar" class="btn-primary">Guardar Gasto</button>
 <button id="btnEliminarTodo" class="btn-danger">Eliminar Todo</button>
 </div>
 
 <div class="card">
-<h3>Listado</h3>
+<h3>Listado de Gastos</h3>
 <div id="tabla"></div>
 <button id="btnExportar" class="btn-success">Exportar Excel Oficial</button>
 </div>
@@ -67,10 +85,26 @@ navigator.serviceWorker.register('service-worker.js');
 document.addEventListener("DOMContentLoaded", function(){
 
 const KEY="tooltek_gastos_v1";
-const LOGO_BASE64="data:image/png;base64,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";
+const LOGO_BASE64="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlgAAACWCAIAAACNeWFmAAAGSElEQVR4nO3ZfWxV5R3A8ef29lLGiui6gXPiyktlydA5X4bKpPMV5kSNREW36BhLFvbCsjgMYzGL2+hGWUKirIMsBJluA6nGaJRUNwcVZsZLFVvZtFXQCGgFllGYK33bH5c0DW02A5He7ff5/HXur+c55/T+8819TuasS6sTAERVNNgPAACDSQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQhNCAEITQgBCE0IAQiteLBuPLWy4ms3X5BSuugzZ27Z/lZKadUjL5QOG3LnjM92dHblirMr1zbUrmtKKd3ypXP6D5vq5k6cet9/vtqSe659ccfe/Al/2Njy69Vbe1edMXL4iuqb7rir9t39h1NKEyeMmj9nSq4429nZPa9q3Z7Wtlee/V5+bXG26Mf3Pbv9r2+nlGZOP/end1118U3L9x04fFK/LAA+MIMWwroNzXUbmlNKTXVzb/326pRS5aQxs2+54La5aw4eaj+ltGTl4hlv72vLFhXdet05xww3bnnjv14tpVQ9f2rvcV8lQ4rvv3f6gsXP5CuYUvrFgmmz5j26t7Xti184+4ffufxb9zze0dGVX/upcR9bvGDa9NkPppSu+vy4lWsbrrhk7MNPNn5Q3wsAJ1cBbY1+4/aLFv5y/cFD7Smlg4faq2o2zPnypAGHJ3ijqruvXvtU0wsv7+mdlJ324ZIhxSmlZza2rKpt6Hvy3197d/THR6SUPjQ0N2xo7vdPvHTl5LEn+AAAFI5B+0XY3/jyspdfbe392PTKOxVjylJKAw6P26ybz29v71r9xEt9h9XL6mtrbvvT868/Wrfj+YY3+/5p8oWf3NHcmlKaMql8/V92vv7mgTNPH5HLZTs6uk7kMQAoEAUUwmNkMqmnJ2UyAwzfp1wuu2bpzPzxomX1DU17crnsHTPOb9m1/5gz1z7V9PRzLVOnVPzou1fU1TcvWbEpvzaTybQdbr/753UppWsuG//pipHXXj5h1EdLLz5v9HNbdp3Y/wdAQSigEDbv3D9xwqhtjbvzHydOGPXqzn1FmUz/4fu8YO97vl5d3d3TZ/9m+cIbv3LjeQ899mJ+WHbqsPLRp21r3P3wk41/3PTa0w9+dcmKTceszRZlxo7+yLQ7V6WUKieNuXLyOCEE+P9QQO8Il/9u84JvVg4vLUkpnVJa8oM5lct+u3nA4XHforur59DhI9+vWjd31iXjy49usfb09NT85PozRg5PKZ06Yujud9r6L7zw3E/saDm6Q7t5+1tTPld+3M8AQEEpoF+E9Zt3nT5y+Jr7Zx7p6MwVZx+obdi09Y2U0oDDXC77yK9uzy/c2rj7ZzUb+l+w79ZoQ9OeRcvq88d7W9sWLl2/9N7rrv/6Q0c6ug784735i+pqFt7Q3t7Z1dU9r2pd/0tdfVnFn7cdfXf43r869v39n+PLy/pvsQLwPydz1qXVg/0MADBoCmhrFABOPiEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEIDQhBCA0IQQgNCEEILR/Ayw5n0a3uW/hAAAAAElFTkSuQmCC";
 
 function cargar(){return JSON.parse(localStorage.getItem(KEY))||[];}
 function guardar(d){localStorage.setItem(KEY,JSON.stringify(d));render();}
+
+function validarRUT(rut){
+rut=rut.replace(/\./g,'').replace(/-/g,'').toUpperCase();
+if(rut.length<2)return false;
+const cuerpo=rut.slice(0,-1);
+const dv=rut.slice(-1);
+let suma=0;
+let multiplo=2;
+for(let i=cuerpo.length-1;i>=0;i--){
+suma+=parseInt(cuerpo.charAt(i))*multiplo;
+multiplo=multiplo<7?multiplo+1:2;
+}
+const dvEsperado=11-(suma%11);
+let dvCalculado=dvEsperado===11?'0':dvEsperado===10?'K':dvEsperado.toString();
+return dv===dvCalculado;
+}
 
 function render(){
 const data=cargar();
@@ -82,9 +116,9 @@ total+=parseFloat(g.monto);
 html+=`<tr>
 <td>${g.fecha}</td>
 <td>${g.tipoGasto}</td>
-<td>${g.tipoDocumento} ${g.numeroDocumento}</td>
+<td>${g.tipoDocumento} ${g.numeroDocumento}${g.rut?' RUT:'+g.rut:''}</td>
 <td>${g.empresa}</td>
-<td>${Number(g.monto).toLocaleString("es-CL")}</td>
+<td>$${Number(g.monto).toLocaleString("es-CL")}</td>
 <td>${g.imagen?`<img src="${g.imagen}" class="preview">`:"-"}</td>
 </tr>`;
 });
@@ -92,26 +126,75 @@ html+=`</table><h3>Total: $${total.toLocaleString("es-CL")}</h3>`;
 document.getElementById("tabla").innerHTML=html;
 }
 
-document.getElementById("btnGuardar").onclick=function(){
+const tipoDocSelect=document.getElementById("tipoDocumento");
+const rutInput=document.getElementById("rut");
+
+tipoDocSelect.addEventListener('change',function(){
+if(this.value==="Factura"){
+rutInput.classList.remove('hidden');
+rutInput.required=true;
+}else{
+rutInput.classList.add('hidden');
+rutInput.required=false;
+rutInput.value='';
+}
+});
+
+document.getElementById("btnGuardar").addEventListener('click',function(e){
+e.preventDefault();
 const f=document.getElementById("fecha").value;
 const tg=document.getElementById("tipoGasto").value;
 const td=document.getElementById("tipoDocumento").value;
+const rut=document.getElementById("rut").value;
 const nd=document.getElementById("numeroDocumento").value;
-const e=document.getElementById("empresa").value;
+const emp=document.getElementById("empresa").value;
 const m=document.getElementById("monto").value;
 const d=document.getElementById("descripcion").value;
-if(!f||!tg||!td||!nd||!e||!m){alert("Completa campos");return;}
+
+if(!f){alert("Seleccione una fecha");return;}
+if(!tg){alert("Seleccione tipo de gasto");return;}
+if(!td){alert("Seleccione tipo de documento");return;}
+if(td==="Factura"&&!rut){alert("Ingrese RUT para Factura");return;}
+if(td==="Factura"&&!validarRUT(rut)){alert("RUT inválido. Formato: 12345678-9");return;}
+if(!nd){alert("Ingrese número de documento");return;}
+if(!emp){alert("Ingrese proveedor/empresa");return;}
+if(!m||m<=0){alert("Ingrese monto válido");return;}
+
 const file=document.getElementById("imagen").files[0];
 if(file){
 const reader=new FileReader();
-reader.onload=ev=>{guardar([...cargar(),{fecha:f,tipoGasto:tg,tipoDocumento:td,numeroDocumento:nd,empresa:e,monto:m,descripcion:d,imagen:ev.target.result}]);};
-reader.readAsDataURL(file);
-}else{guardar([...cargar(),{fecha:f,tipoGasto:tg,tipoDocumento:td,numeroDocumento:nd,empresa:e,monto:m,descripcion:d,imagen:null}]);}
+reader.onload=function(ev){
+guardar([...cargar(),{fecha:f,tipoGasto:tg,tipoDocumento:td,numeroDocumento:nd,empresa:emp,monto:m,descripcion:d,rut:td==="Factura"?rut:null,imagen:ev.target.result}]);
+limpiarFormulario();
 };
+reader.readAsDataURL(file);
+}else{
+guardar([...cargar(),{fecha:f,tipoGasto:tg,tipoDocumento:td,numeroDocumento:nd,empresa:emp,monto:m,descripcion:d,rut:td==="Factura"?rut:null,imagen:null}]);
+limpiarFormulario();
+}
+},false);
 
-document.getElementById("btnEliminarTodo").onclick=function(){localStorage.removeItem(KEY);render();};
+function limpiarFormulario(){
+document.getElementById("fecha").value='';
+document.getElementById("tipoGasto").value='';
+document.getElementById("tipoDocumento").value='';
+document.getElementById("rut").value='';
+document.getElementById("rut").classList.add('hidden');
+document.getElementById("numeroDocumento").value='';
+document.getElementById("empresa").value='';
+document.getElementById("monto").value='';
+document.getElementById("descripcion").value='';
+document.getElementById("imagen").value='';
+}
 
-document.getElementById("btnExportar").onclick=async function(){
+document.getElementById("btnEliminarTodo").addEventListener('click',function(){
+if(confirm('¿Está seguro de eliminar todos los gastos registrados?')){
+localStorage.removeItem(KEY);
+render();
+}
+},false);
+
+document.getElementById("btnExportar").addEventListener('click',async function(){
 const workbook=new ExcelJS.Workbook();
 const sheet=workbook.addWorksheet("Rendición TOOLTEK");
 
@@ -119,20 +202,22 @@ const logoId=workbook.addImage({base64:LOGO_BASE64,extension:'png'});
 sheet.addImage(logoId,'A1:D4');
 
 sheet.addRow([]);
-sheet.addRow(["Fecha","Tipo","Documento","Empresa","Monto"]);
+sheet.addRow(["Fecha","Tipo Gasto","Tipo Doc","Nº Documento","RUT","Empresa","Monto","Descripción"]);
 
 const data=cargar();
 let rowIndex=6;
 
 for(let i=0;i<data.length;i++){
 const g=data[i];
-sheet.addRow([g.fecha,g.tipoGasto,g.tipoDocumento+" "+g.numeroDocumento,g.empresa,g.monto]);
+sheet.addRow([g.fecha,g.tipoGasto,g.tipoDocumento,g.numeroDocumento,g.rut||'',g.empresa,g.monto,g.descripcion||'']);
 if(g.imagen){
 const imgId=workbook.addImage({base64:g.imagen,extension:'png'});
-sheet.addImage(imgId,{tl:{col:5,row:rowIndex-1},ext:{width:80,height:60}});
+sheet.addImage(imgId,{tl:{col:8,row:rowIndex-1},ext:{width:80,height:60}});
 }
 rowIndex++;
 }
+
+sheet.columns=[{width:12},{width:35},{width:12},{width:15},{width:12},{width:25},{width:12},{width:30},{width:15}];
 
 const buffer=await workbook.xlsx.writeBuffer();
 const blob=new Blob([buffer]);
@@ -140,7 +225,7 @@ const link=document.createElement("a");
 link.href=URL.createObjectURL(blob);
 link.download="Rendicion_TOOLTEK_SPA.xlsx";
 link.click();
-};
+},false);
 
 render();
 });
