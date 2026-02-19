@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rendición de Gastos Empresarial</title>
+<title>TOOLTEK SPA - Rendición de Gastos</title>
 
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1e3a8a">
@@ -13,12 +13,14 @@
 <style>
 body{font-family:Arial;margin:0;background:#f4f6f9}
 header{background:#1e3a8a;color:white;padding:15px;text-align:center}
-.container{padding:20px;max-width:1000px;margin:auto}
+header img{height:60px}
+.container{padding:20px;max-width:1100px;margin:auto}
 .card{background:white;padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
 input,select,textarea{width:100%;padding:8px;margin:5px 0 10px;border-radius:5px;border:1px solid #ccc}
 button{padding:10px 15px;border:none;border-radius:6px;cursor:pointer;margin:5px 0}
 .btn-primary{background:#2563eb;color:white}
 .btn-success{background:#16a34a;color:white}
+.btn-danger{background:#dc2626;color:white}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ddd;padding:8px;text-align:left}
 .preview{width:60px;border-radius:6px}
@@ -27,116 +29,116 @@ th,td{border:1px solid #ddd;padding:8px;text-align:left}
 </head>
 <body>
 
-<header><h2>Rendición de Gastos Empresarial</h2></header>
+<header>
+<img src="logo.png">
+<h2>TOOLTEK SPA</h2>
+<p>Sistema de Rendición de Gastos</p>
+</header>
 
 <div class="container">
+
 <div class="card">
 <h3>Registrar Gasto</h3>
 <input id="fecha" type="date">
-<input id="empresa" placeholder="Empresa">
-<input id="monto" type="number" placeholder="Monto">
+<input id="tipoGasto" placeholder="Tipo de Gasto">
+<input id="tipoDocumento" placeholder="Tipo Documento">
+<input id="numeroDocumento" placeholder="Número Documento">
+<input id="empresa" placeholder="Proveedor / Empresa">
+<input id="monto" type="number" placeholder="Monto CLP">
+<textarea id="descripcion" placeholder="Descripción"></textarea>
 <input id="imagen" type="file" accept="image/*">
 <button id="btnGuardar" class="btn-primary">Guardar</button>
+<button id="btnEliminarTodo" class="btn-danger">Eliminar Todo</button>
 </div>
 
 <div class="card">
 <h3>Listado</h3>
 <div id="tabla"></div>
-<button id="btnExportar" class="btn-success">Exportar Excel con Imagen</button>
+<button id="btnExportar" class="btn-success">Exportar Excel Oficial</button>
 </div>
+
 </div>
 
 <script>
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js');
+navigator.serviceWorker.register('service-worker.js');
 }
 
 document.addEventListener("DOMContentLoaded", function(){
 
-const KEY="gastos_pro_v1";
-
-const fecha=document.getElementById("fecha");
-const empresa=document.getElementById("empresa");
-const monto=document.getElementById("monto");
-const imagen=document.getElementById("imagen");
-const tabla=document.getElementById("tabla");
+const KEY="tooltek_gastos_v1";
+const LOGO_BASE64="data:image/png;base64,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";
 
 function cargar(){return JSON.parse(localStorage.getItem(KEY))||[];}
 function guardar(d){localStorage.setItem(KEY,JSON.stringify(d));render();}
 
 function render(){
 const data=cargar();
-if(!data.length){tabla.innerHTML="<p>Sin registros</p>";return;}
-let html="<table><tr><th>Fecha</th><th>Empresa</th><th>Monto</th><th>Img</th></tr>";
+if(!data.length){document.getElementById("tabla").innerHTML="<p>Sin registros</p>";return;}
+let total=0;
+let html="<table><tr><th>Fecha</th><th>Tipo</th><th>Doc</th><th>Empresa</th><th>Monto</th><th>Img</th></tr>";
 data.forEach(g=>{
+total+=parseFloat(g.monto);
 html+=`<tr>
 <td>${g.fecha}</td>
+<td>${g.tipoGasto}</td>
+<td>${g.tipoDocumento} ${g.numeroDocumento}</td>
 <td>${g.empresa}</td>
-<td>$${g.monto}</td>
+<td>${Number(g.monto).toLocaleString("es-CL")}</td>
 <td>${g.imagen?`<img src="${g.imagen}" class="preview">`:"-"}</td>
 </tr>`;
 });
-html+="</table>";
-tabla.innerHTML=html;
+html+=`</table><h3>Total: $${total.toLocaleString("es-CL")}</h3>`;
+document.getElementById("tabla").innerHTML=html;
 }
 
 document.getElementById("btnGuardar").onclick=function(){
-if(!fecha.value||!empresa.value||!monto.value){alert("Completa campos");return;}
-const file=imagen.files[0];
+const f=document.getElementById("fecha").value;
+const tg=document.getElementById("tipoGasto").value;
+const td=document.getElementById("tipoDocumento").value;
+const nd=document.getElementById("numeroDocumento").value;
+const e=document.getElementById("empresa").value;
+const m=document.getElementById("monto").value;
+const d=document.getElementById("descripcion").value;
+if(!f||!tg||!td||!nd||!e||!m){alert("Completa campos");return;}
+const file=document.getElementById("imagen").files[0];
 if(file){
 const reader=new FileReader();
-reader.onload=e=>{
-guardar([...cargar(),{
-fecha:fecha.value,
-empresa:empresa.value,
-monto:monto.value,
-imagen:e.target.result
-}]);
-};
+reader.onload=ev=>{guardar([...cargar(),{fecha:f,tipoGasto:tg,tipoDocumento:td,numeroDocumento:nd,empresa:e,monto:m,descripcion:d,imagen:ev.target.result}]);};
 reader.readAsDataURL(file);
-}else{
-guardar([...cargar(),{
-fecha:fecha.value,
-empresa:empresa.value,
-monto:monto.value,
-imagen:null
-}]);
-}
-fecha.value="";empresa.value="";monto.value="";imagen.value="";
+}else{guardar([...cargar(),{fecha:f,tipoGasto:tg,tipoDocumento:td,numeroDocumento:nd,empresa:e,monto:m,descripcion:d,imagen:null}]);}
 };
+
+document.getElementById("btnEliminarTodo").onclick=function(){localStorage.removeItem(KEY);render();};
 
 document.getElementById("btnExportar").onclick=async function(){
 const workbook=new ExcelJS.Workbook();
-const sheet=workbook.addWorksheet("Gastos");
-sheet.columns=[
-{header:"Fecha",key:"fecha",width:15},
-{header:"Empresa",key:"empresa",width:20},
-{header:"Monto",key:"monto",width:15},
-{header:"Imagen",key:"imagen",width:25}
-];
+const sheet=workbook.addWorksheet("Rendición TOOLTEK");
+
+const logoId=workbook.addImage({base64:LOGO_BASE64,extension:'png'});
+sheet.addImage(logoId,'A1:D4');
+
+sheet.addRow([]);
+sheet.addRow(["Fecha","Tipo","Documento","Empresa","Monto"]);
 
 const data=cargar();
+let rowIndex=6;
 
 for(let i=0;i<data.length;i++){
 const g=data[i];
-const row=sheet.addRow({fecha:g.fecha,empresa:g.empresa,monto:g.monto});
+sheet.addRow([g.fecha,g.tipoGasto,g.tipoDocumento+" "+g.numeroDocumento,g.empresa,g.monto]);
 if(g.imagen){
-const imgId=workbook.addImage({
-base64:g.imagen,
-extension:'png'
-});
-sheet.addImage(imgId,{
-tl:{col:3,row:i+1},
-ext:{width:80,height:60}
-});
+const imgId=workbook.addImage({base64:g.imagen,extension:'png'});
+sheet.addImage(imgId,{tl:{col:5,row:rowIndex-1},ext:{width:80,height:60}});
 }
+rowIndex++;
 }
 
 const buffer=await workbook.xlsx.writeBuffer();
 const blob=new Blob([buffer]);
 const link=document.createElement("a");
 link.href=URL.createObjectURL(blob);
-link.download="Rendicion_con_imagen.xlsx";
+link.download="Rendicion_TOOLTEK_SPA.xlsx";
 link.click();
 };
 
