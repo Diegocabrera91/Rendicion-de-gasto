@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rendición de Gastos - TOOLTEK SPA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         :root {
             --tooltek-blue: #1a5a8e;
@@ -498,30 +500,49 @@
             }
         }
 
-        function exportarExcel() {
+        async function exportarExcel() {
             if (gastos.length === 0) {
                 mostrarAlerta('❌ No hay gastos para exportar', 'error');
                 return;
             }
 
             try {
-                const wb = XLSX.utils.book_new();
+                mostrarAlerta('📦 Generando ZIP con Excel e imágenes...', 'success');
                 
-                // Preparar datos
-                const data = gastos.map((g, i) => ({
-                    'N°': i + 1,
-                    'Fecha': new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-CL'),
-                    'Tipo de Gasto': g.tipoGasto,
-                    'Tipo Documento': g.tipoDoc,
-                    'N° Documento': g.numDoc,
-                    'RUT': g.rut || '',
-                    'Empresa/Proveedor': g.empresa,
-                    'Monto (CLP)': parseFloat(g.monto),
-                    'Descripción': g.descripcion || '',
-                    'Cant. Imágenes': g.imagenes ? g.imagenes.length : 0
-                }));
-
-                // Crear hoja
+                const zip = new JSZip();
+                
+                // 1. Crear Excel con referencias a archivos de imagen
+                const wb = XLSX.utils.book_new();
+                const data = gastos.map((g, i) => {
+                    const numGasto = i + 1;
+                    let archivoImg = '';
+                    
+                    // Generar nombres de archivos según cantidad de imágenes
+                    if (g.imagenes && g.imagenes.length > 0) {
+                        if (g.imagenes.length === 1) {
+                            archivoImg = `imagenes/gasto_${numGasto}.png`;
+                        } else {
+                            const nombres = g.imagenes.map((_, idx) => 
+                                `gasto_${numGasto}_img${idx + 1}.png`
+                            ).join(', ');
+                            archivoImg = `imagenes/${nombres}`;
+                        }
+                    }
+                    
+                    return {
+                        'N°': numGasto,
+                        'Fecha': new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-CL'),
+                        'Tipo de Gasto': g.tipoGasto,
+                        'Tipo Documento': g.tipoDoc,
+                        'N° Documento': g.numDoc,
+                        'RUT': g.rut || '',
+                        'Empresa/Proveedor': g.empresa,
+                        'Monto (CLP)': parseFloat(g.monto),
+                        'Descripción': g.descripcion || '',
+                        'Archivos Adjuntos': archivoImg
+                    };
+                });
+                
                 const ws = XLSX.utils.json_to_sheet(data);
                 
                 // Ajustar anchos de columna
@@ -535,20 +556,79 @@
                     {wch: 25}, // Empresa
                     {wch: 15}, // Monto
                     {wch: 30}, // Descripción
-                    {wch: 10}  // Imágenes
+                    {wch: 50}  // Archivos Adjuntos
                 ];
-
+                
                 XLSX.utils.book_append_sheet(wb, ws, 'Gastos');
                 
-                // Generar archivo
-                const fecha = new Date().toISOString().split('T')[0];
-                const filename = `Rendicion_Gastos_TOOLTEK_${fecha}.xlsx`;
-                XLSX.writeFile(wb, filename);
+                // Generar buffer del Excel
+                const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                zip.file('Rendicion_Gastos.xlsx', excelBuffer);
                 
-                mostrarAlerta(`✅ Excel exportado: ${gastos.length} gastos`);
+                // 2. Agregar carpeta con todas las imágenes
+                const imgFolder = zip.folder('imagenes');
+                let totalImagenes = 0;
+                
+                gastos.forEach((g, i) => {
+                    if (g.imagenes && g.imagenes.length > 0) {
+                        g.imagenes.forEach((img, imgIndex) => {
+                            // Extraer base64 (remover prefijo data:image/png;base64,)
+                            const base64Data = img.split(',')[1];
+                            
+                            // Detectar extensión real de la imagen
+                            const extension = img.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+                            
+                            // Nombrar archivo
+                            let nombreArchivo;
+                            if (g.imagenes.length === 1) {
+                                nombreArchivo = `gasto_${i + 1}.${extension}`;
+                            } else {
+                                nombreArchivo = `gasto_${i + 1}_img${imgIndex + 1}.${extension}`;
+                            }
+                            
+                            imgFolder.file(nombreArchivo, base64Data, { base64: true });
+                            totalImagenes++;
+                        });
+                    }
+                });
+                
+                // 3. Agregar archivo README.txt con instrucciones
+                const readmeContent = `RENDICIÓN DE GASTOS - TOOLTEK SPA
+Fecha de exportación: ${new Date().toLocaleString('es-CL')}
+
+CONTENIDO:
+- Rendicion_Gastos.xlsx: Planilla con ${gastos.length} gastos registrados
+- imagenes/: Carpeta con ${totalImagenes} comprobantes (fotos de documentos)
+
+INSTRUCCIONES:
+1. Abrir Rendicion_Gastos.xlsx
+2. La columna "Archivos Adjuntos" indica qué imágenes corresponden a cada gasto
+3. Las imágenes están en la carpeta "imagenes/" con nombres correlativos
+
+NOTA: Los archivos están nombrados como "gasto_X.png" o "gasto_X_imgY.png"
+donde X es el número de gasto e Y el número de imagen (si hay múltiples).
+
+Generado por Sistema de Rendición de Gastos TOOLTEK SPA`;
+                
+                zip.file('LEEME.txt', readmeContent);
+                
+                // 4. Generar y descargar ZIP
+                const zipBlob = await zip.generateAsync({ 
+                    type: 'blob',
+                    compression: 'DEFLATE',
+                    compressionOptions: { level: 6 }
+                });
+                
+                const fecha = new Date().toISOString().split('T')[0];
+                const filename = `Rendicion_Gastos_TOOLTEK_${fecha}.zip`;
+                
+                // Descargar usando FileSaver.js
+                saveAs(zipBlob, filename);
+                
+                mostrarAlerta(`✅ ZIP exportado: Excel + ${totalImagenes} imágenes`);
             } catch (error) {
                 console.error('Error exportando:', error);
-                mostrarAlerta('❌ Error al exportar. Intenta de nuevo', 'error');
+                mostrarAlerta('❌ Error al exportar. Verifica console (F12)', 'error');
             }
         }
 
