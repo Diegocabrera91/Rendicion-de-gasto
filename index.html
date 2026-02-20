@@ -118,6 +118,47 @@
         .btn-secondary:active { background: #4b5563; transform: scale(0.98); }
         .btn-warning { background: var(--warning); color: white; }
         .btn-warning:active { background: #d97706; transform: scale(0.98); }
+        .btn-edit { background: #3b82f6; color: white; }
+        .btn-edit:active { background: #2563eb; transform: scale(0.98); }
+        
+        /* Vista previa de imágenes */
+        .preview-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .preview-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--border);
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preview-item .remove-preview {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
         
         /* Tabla responsive para móvil */
         .tabla-wrapper { 
@@ -128,7 +169,7 @@
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            min-width: 600px;
+            min-width: 700px;
         }
         th, td { 
             padding: 10px 8px; 
@@ -155,6 +196,10 @@
             font-size: 14px; 
             width: auto;
             min-width: 60px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 4px;
         }
         
         .stats { 
@@ -243,7 +288,8 @@
                 grid-template-columns: repeat(2, 1fr);
             }
             .form-grid textarea,
-            .form-grid input[type="file"] {
+            .form-grid input[type="file"],
+            .form-grid .preview-container {
                 grid-column: span 2;
             }
             header img { height: 100px; }
@@ -276,7 +322,7 @@
         </div>
         
         <div class="form-section">
-            <h2>📝 Nuevo Gasto</h2>
+            <h2 id="formTitle">📝 Nuevo Gasto</h2>
             <form id="formGasto" class="form-grid">
                 <div>
                     <label>Fecha *</label>
@@ -326,6 +372,7 @@
                     <label>Comprobante (Foto)</label>
                     <input type="file" id="imagenes" multiple accept="image/*" capture="environment">
                 </div>
+                <div id="previewContainer" class="preview-container" style="display: none;"></div>
             </form>
             <button class="btn btn-primary" id="btnAgregar">➕ Agregar Gasto</button>
             <button class="btn btn-secondary" id="btnLimpiar">🧹 Limpiar Formulario</button>
@@ -357,7 +404,7 @@
                             <th>Empresa</th>
                             <th>Monto</th>
                             <th>Img</th>
-                            <th>🗑️</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -397,6 +444,7 @@
         let gastos = [];
         let imagenesActuales = [];
         let fondoInicial = 0;
+        let indiceEditando = null;
 
         // Cargar datos al iniciar
         function cargarDatos() {
@@ -465,6 +513,32 @@
             return base64Array;
         }
 
+        function mostrarVistaPrevia() {
+            const container = document.getElementById('previewContainer');
+            container.innerHTML = '';
+            
+            if (imagenesActuales.length > 0) {
+                container.style.display = 'flex';
+                imagenesActuales.forEach((img, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'preview-item';
+                    item.innerHTML = `
+                        <img src="${img}" alt="Preview ${index + 1}">
+                        <button class="remove-preview" onclick="eliminarImagenPreview(${index})" type="button">×</button>
+                    `;
+                    container.appendChild(item);
+                });
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function eliminarImagenPreview(index) {
+            imagenesActuales.splice(index, 1);
+            mostrarVistaPrevia();
+            mostrarAlerta('🗑️ Imagen eliminada de la vista previa');
+        }
+
         function formatearMonto(monto) {
             return new Intl.NumberFormat('es-CL', {
                 style: 'currency',
@@ -504,7 +578,12 @@
                         <td>${gasto.empresa}</td>
                         <td>${formatearMonto(gasto.monto)}</td>
                         <td>${gasto.imagenes && gasto.imagenes.length ? `<img src="${gasto.imagenes[0]}" class="img-preview" onclick="verImagen('${gasto.imagenes[0]}')">` : '-'}</td>
-                        <td><button class="btn btn-danger btn-small" onclick="eliminarGasto(${index})" style="width: 40px; padding: 6px;">🗑️</button></td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-edit btn-small" onclick="editarGasto(${index})" style="width: 40px; padding: 6px;">✏️</button>
+                                <button class="btn btn-danger btn-small" onclick="eliminarGasto(${index})" style="width: 40px; padding: 6px;">🗑️</button>
+                            </div>
+                        </td>
                     `;
                 });
             }
@@ -544,6 +623,41 @@
             }
         }
 
+        function editarGasto(index) {
+            const gasto = gastos[index];
+            indiceEditando = index;
+            
+            // Llenar formulario con datos del gasto
+            document.getElementById('fecha').value = gasto.fecha;
+            document.getElementById('tipoGasto').value = gasto.tipoGasto;
+            document.getElementById('tipoDoc').value = gasto.tipoDoc;
+            document.getElementById('numDoc').value = gasto.numDoc;
+            document.getElementById('rut').value = gasto.rut || '';
+            document.getElementById('empresa').value = gasto.empresa;
+            document.getElementById('monto').value = gasto.monto;
+            document.getElementById('descripcion').value = gasto.descripcion || '';
+            
+            // Mostrar campo RUT si es factura
+            if (gasto.tipoDoc === 'Factura') {
+                document.getElementById('rutContainer').style.display = 'block';
+                document.getElementById('rut').required = true;
+            }
+            
+            // Cargar imágenes existentes
+            imagenesActuales = gasto.imagenes ? [...gasto.imagenes] : [];
+            mostrarVistaPrevia();
+            
+            // Cambiar título y botón
+            document.getElementById('formTitle').textContent = '✏️ Editar Gasto';
+            document.getElementById('btnAgregar').innerHTML = '✅ Guardar Cambios';
+            document.getElementById('btnAgregar').className = 'btn btn-success';
+            
+            // Scroll al formulario
+            document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+            
+            mostrarAlerta('✏️ Editando gasto. Modifica los campos y guarda los cambios.');
+        }
+
         function agregarGasto() {
             const fecha = document.getElementById('fecha').value;
             const tipoGasto = document.getElementById('tipoGasto').value;
@@ -566,7 +680,7 @@
             }
 
             const gasto = {
-                id: Date.now(),
+                id: indiceEditando !== null ? gastos[indiceEditando].id : Date.now(),
                 fecha,
                 tipoGasto,
                 tipoDoc,
@@ -578,14 +692,22 @@
                 imagenes: [...imagenesActuales]
             };
 
-            gastos.push(gasto);
+            if (indiceEditando !== null) {
+                // Modo edición
+                gastos[indiceEditando] = gasto;
+                mostrarAlerta('✅ Gasto actualizado exitosamente');
+                indiceEditando = null;
+            } else {
+                // Modo agregar
+                gastos.push(gasto);
+                const totalGastado = gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
+                const saldoRestante = fondoInicial - totalGastado;
+                mostrarAlerta(`✅ Gasto agregado. Saldo: ${formatearMonto(saldoRestante)}`);
+            }
+
             guardarGastos();
             limpiarFormulario();
             actualizarTabla();
-            
-            const totalGastado = gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
-            const saldoRestante = fondoInicial - totalGastado;
-            mostrarAlerta(`✅ Gasto agregado. Saldo: ${formatearMonto(saldoRestante)}`);
             
             // Scroll a la tabla en móvil
             if (window.innerWidth < 768) {
@@ -598,6 +720,13 @@
             document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
             document.getElementById('rutContainer').style.display = 'none';
             imagenesActuales = [];
+            indiceEditando = null;
+            mostrarVistaPrevia();
+            
+            // Restaurar título y botón original
+            document.getElementById('formTitle').textContent = '📝 Nuevo Gasto';
+            document.getElementById('btnAgregar').innerHTML = '➕ Agregar Gasto';
+            document.getElementById('btnAgregar').className = 'btn btn-primary';
         }
 
         function eliminarGasto(index) {
@@ -606,6 +735,11 @@
                 guardarGastos();
                 actualizarTabla();
                 mostrarAlerta('🗑️ Gasto eliminado');
+                
+                // Si estaba editando este gasto, limpiar formulario
+                if (indiceEditando === index) {
+                    limpiarFormulario();
+                }
             }
         }
 
@@ -618,6 +752,7 @@
                 gastos = [];
                 guardarGastos();
                 actualizarTabla();
+                limpiarFormulario();
                 mostrarAlerta('🗑️ Todos los gastos eliminados', 'error');
             }
         }
@@ -793,9 +928,11 @@ Generado por Sistema de Rendición de Gastos TOOLTEK SPA`;
                 const files = e.target.files;
                 if (files && files.length > 0) {
                     mostrarAlerta(`📷 Procesando ${files.length} imagen(es)...`);
-                    imagenesActuales = await archivosABase64(files);
-                    if (imagenesActuales.length > 0) {
-                        mostrarAlerta(`✅ ${imagenesActuales.length} imagen(es) lista(s)`);
+                    const nuevasImagenes = await archivosABase64(files);
+                    imagenesActuales = [...imagenesActuales, ...nuevasImagenes];
+                    mostrarVistaPrevia();
+                    if (nuevasImagenes.length > 0) {
+                        mostrarAlerta(`✅ ${nuevasImagenes.length} imagen(es) agregada(s)`);
                     }
                 }
             });
