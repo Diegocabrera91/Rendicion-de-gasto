@@ -17,6 +17,7 @@
             --border: #e2e8f0;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
@@ -43,6 +44,20 @@
             margin: 0 auto; 
             padding: 10px; 
         }
+        .fondo-section {
+            background: var(--bg-card);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .fondo-section h2 { font-size: 18px; margin-bottom: 12px; color: var(--tooltek-blue); }
+        .fondo-input-group {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+        .fondo-input-group > div { flex: 1; }
         .form-section, .tabla-section { 
             background: var(--bg-card); 
             padding: 16px; 
@@ -101,6 +116,8 @@
         .btn-danger:active { background: #dc2626; transform: scale(0.98); }
         .btn-secondary { background: #6b7280; color: white; }
         .btn-secondary:active { background: #4b5563; transform: scale(0.98); }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-warning:active { background: #d97706; transform: scale(0.98); }
         
         /* Tabla responsive para móvil */
         .tabla-wrapper { 
@@ -142,7 +159,7 @@
         
         .stats { 
             display: grid; 
-            grid-template-columns: 1fr 1fr; 
+            grid-template-columns: repeat(3, 1fr); 
             gap: 12px; 
             margin-top: 16px; 
         }
@@ -153,7 +170,10 @@
             border-radius: 12px; 
             text-align: center; 
         }
-        .stat-card h3 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .stat-card.fondo { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .stat-card.saldo-positivo { background: linear-gradient(135deg, var(--success), #34d399); }
+        .stat-card.saldo-negativo { background: linear-gradient(135deg, var(--danger), #f87171); }
+        .stat-card h3 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
         .stat-card p { font-size: 12px; opacity: 0.9; }
         
         .alert { 
@@ -205,6 +225,10 @@
             .btn { width: auto; }
             .acciones-top { flex-direction: row; justify-content: space-between; }
         }
+        
+        @media (max-width: 768px) {
+            .stats { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -214,6 +238,17 @@
     </header>
     
     <div class="container">
+        <div class="fondo-section">
+            <h2>💰 Fondo a Rendir</h2>
+            <div class="fondo-input-group">
+                <div>
+                    <label>Monto Inicial (CLP) *</label>
+                    <input type="number" id="fondoInicial" placeholder="100000" step="1" inputmode="numeric">
+                </div>
+                <button class="btn btn-warning btn-small" id="btnGuardarFondo" style="width: auto; margin: 0;">✔️ Guardar</button>
+            </div>
+        </div>
+        
         <div class="form-section">
             <h2>📝 Nuevo Gasto</h2>
             <form id="formGasto" class="form-grid">
@@ -304,13 +339,17 @@
             </div>
             
             <div class="stats">
-                <div class="stat-card">
-                    <h3 id="totalMonto">$0</h3>
-                    <p>Total Gastos</p>
+                <div class="stat-card fondo">
+                    <h3 id="fondoMonto">$0</h3>
+                    <p>Fondo Inicial</p>
                 </div>
                 <div class="stat-card">
-                    <h3 id="promedioMonto">$0</h3>
-                    <p>Promedio</p>
+                    <h3 id="totalMonto">$0</h3>
+                    <p>Total Gastado</p>
+                </div>
+                <div class="stat-card" id="saldoCard">
+                    <h3 id="saldoMonto">$0</h3>
+                    <p>Saldo Restante</p>
                 </div>
             </div>
         </div>
@@ -321,15 +360,21 @@
     <script>
         let gastos = [];
         let imagenesActuales = [];
+        let fondoInicial = 0;
 
-        // Cargar gastos al iniciar
-        function cargarGastos() {
+        // Cargar datos al iniciar
+        function cargarDatos() {
             try {
                 const gastosGuardados = localStorage.getItem('gastosTooltek');
                 gastos = gastosGuardados ? JSON.parse(gastosGuardados) : [];
+                
+                const fondoGuardado = localStorage.getItem('fondoTooltek');
+                fondoInicial = fondoGuardado ? parseFloat(fondoGuardado) : 0;
+                document.getElementById('fondoInicial').value = fondoInicial || '';
             } catch (e) {
-                console.error('Error cargando gastos:', e);
+                console.error('Error cargando datos:', e);
                 gastos = [];
+                fondoInicial = 0;
             }
         }
 
@@ -338,6 +383,22 @@
                 localStorage.setItem('gastosTooltek', JSON.stringify(gastos));
             } catch (e) {
                 mostrarAlerta('Error al guardar en caché', 'error');
+            }
+        }
+        
+        function guardarFondo() {
+            const inputFondo = document.getElementById('fondoInicial').value;
+            if (!inputFondo || parseFloat(inputFondo) <= 0) {
+                mostrarAlerta('❌ Ingresa un monto válido', 'error');
+                return;
+            }
+            fondoInicial = parseFloat(inputFondo);
+            try {
+                localStorage.setItem('fondoTooltek', fondoInicial.toString());
+                actualizarEstadisticas();
+                mostrarAlerta(`✅ Fondo guardado: ${formatearMonto(fondoInicial)}`);
+            } catch (e) {
+                mostrarAlerta('Error al guardar fondo', 'error');
             }
         }
 
@@ -417,12 +478,21 @@
         }
 
         function actualizarEstadisticas() {
-            const total = gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
-            const count = gastos.length;
-            const promedio = count > 0 ? total / count : 0;
+            const totalGastado = gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
+            const saldo = fondoInicial - totalGastado;
             
-            document.getElementById('totalMonto').textContent = formatearMonto(total);
-            document.getElementById('promedioMonto').textContent = formatearMonto(promedio);
+            document.getElementById('fondoMonto').textContent = formatearMonto(fondoInicial);
+            document.getElementById('totalMonto').textContent = formatearMonto(totalGastado);
+            document.getElementById('saldoMonto').textContent = formatearMonto(saldo);
+            
+            // Cambiar color de tarjeta saldo según valor
+            const saldoCard = document.getElementById('saldoCard');
+            saldoCard.className = 'stat-card';
+            if (saldo >= 0) {
+                saldoCard.classList.add('saldo-positivo');
+            } else {
+                saldoCard.classList.add('saldo-negativo');
+            }
         }
 
         function agregarGasto() {
@@ -463,7 +533,10 @@
             guardarGastos();
             limpiarFormulario();
             actualizarTabla();
-            mostrarAlerta(`✅ Gasto agregado. Total: ${gastos.length}`);
+            
+            const totalGastado = gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
+            const saldoRestante = fondoInicial - totalGastado;
+            mostrarAlerta(`✅ Gasto agregado. Saldo: ${formatearMonto(saldoRestante)}`);
             
             // Scroll a la tabla en móvil
             if (window.innerWidth < 768) {
@@ -513,41 +586,51 @@
                 
                 // 1. Crear Excel con referencias a archivos de imagen
                 const wb = XLSX.utils.book_new();
-                const data = gastos.map((g, i) => {
-                    const numGasto = i + 1;
-                    let archivoImg = '';
-                    
-                    // Generar nombres de archivos según cantidad de imágenes
-                    if (g.imagenes && g.imagenes.length > 0) {
-                        if (g.imagenes.length === 1) {
-                            archivoImg = `imagenes/gasto_${numGasto}.png`;
-                        } else {
-                            const nombres = g.imagenes.map((_, idx) => 
-                                `gasto_${numGasto}_img${idx + 1}.png`
-                            ).join(', ');
-                            archivoImg = `imagenes/${nombres}`;
+                
+                // Agregar información de fondo al inicio
+                const totalGastado = gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
+                const saldo = fondoInicial - totalGastado;
+                
+                const data = [
+                    { 'N°': 'FONDO INICIAL:', 'Fecha': '', 'Tipo de Gasto': '', 'Tipo Documento': '', 'N° Documento': '', 'RUT': '', 'Empresa/Proveedor': '', 'Monto (CLP)': fondoInicial, 'Descripción': '', 'Archivos Adjuntos': '' },
+                    { 'N°': 'TOTAL GASTADO:', 'Fecha': '', 'Tipo de Gasto': '', 'Tipo Documento': '', 'N° Documento': '', 'RUT': '', 'Empresa/Proveedor': '', 'Monto (CLP)': totalGastado, 'Descripción': '', 'Archivos Adjuntos': '' },
+                    { 'N°': 'SALDO:', 'Fecha': '', 'Tipo de Gasto': '', 'Tipo Documento': '', 'N° Documento': '', 'RUT': '', 'Empresa/Proveedor': '', 'Monto (CLP)': saldo, 'Descripción': '', 'Archivos Adjuntos': '' },
+                    { 'N°': '', 'Fecha': '', 'Tipo de Gasto': '', 'Tipo Documento': '', 'N° Documento': '', 'RUT': '', 'Empresa/Proveedor': '', 'Monto (CLP)': '', 'Descripción': '', 'Archivos Adjuntos': '' },
+                    ...gastos.map((g, i) => {
+                        const numGasto = i + 1;
+                        let archivoImg = '';
+                        
+                        if (g.imagenes && g.imagenes.length > 0) {
+                            if (g.imagenes.length === 1) {
+                                archivoImg = `imagenes/gasto_${numGasto}.png`;
+                            } else {
+                                const nombres = g.imagenes.map((_, idx) => 
+                                    `gasto_${numGasto}_img${idx + 1}.png`
+                                ).join(', ');
+                                archivoImg = `imagenes/${nombres}`;
+                            }
                         }
-                    }
-                    
-                    return {
-                        'N°': numGasto,
-                        'Fecha': new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-CL'),
-                        'Tipo de Gasto': g.tipoGasto,
-                        'Tipo Documento': g.tipoDoc,
-                        'N° Documento': g.numDoc,
-                        'RUT': g.rut || '',
-                        'Empresa/Proveedor': g.empresa,
-                        'Monto (CLP)': parseFloat(g.monto),
-                        'Descripción': g.descripcion || '',
-                        'Archivos Adjuntos': archivoImg
-                    };
-                });
+                        
+                        return {
+                            'N°': numGasto,
+                            'Fecha': new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-CL'),
+                            'Tipo de Gasto': g.tipoGasto,
+                            'Tipo Documento': g.tipoDoc,
+                            'N° Documento': g.numDoc,
+                            'RUT': g.rut || '',
+                            'Empresa/Proveedor': g.empresa,
+                            'Monto (CLP)': parseFloat(g.monto),
+                            'Descripción': g.descripcion || '',
+                            'Archivos Adjuntos': archivoImg
+                        };
+                    })
+                ];
                 
                 const ws = XLSX.utils.json_to_sheet(data);
                 
                 // Ajustar anchos de columna
                 ws['!cols'] = [
-                    {wch: 5},  // N°
+                    {wch: 15}, // N°
                     {wch: 12}, // Fecha
                     {wch: 35}, // Tipo Gasto
                     {wch: 12}, // Tipo Doc
@@ -572,13 +655,9 @@
                 gastos.forEach((g, i) => {
                     if (g.imagenes && g.imagenes.length > 0) {
                         g.imagenes.forEach((img, imgIndex) => {
-                            // Extraer base64 (remover prefijo data:image/png;base64,)
                             const base64Data = img.split(',')[1];
-                            
-                            // Detectar extensión real de la imagen
                             const extension = img.startsWith('data:image/jpeg') ? 'jpg' : 'png';
                             
-                            // Nombrar archivo
                             let nombreArchivo;
                             if (g.imagenes.length === 1) {
                                 nombreArchivo = `gasto_${i + 1}.${extension}`;
@@ -596,14 +675,20 @@
                 const readmeContent = `RENDICIÓN DE GASTOS - TOOLTEK SPA
 Fecha de exportación: ${new Date().toLocaleString('es-CL')}
 
+RESUMEN:
+- Fondo Inicial: ${formatearMonto(fondoInicial)}
+- Total Gastado: ${formatearMonto(totalGastado)}
+- Saldo Restante: ${formatearMonto(saldo)}
+
 CONTENIDO:
 - Rendicion_Gastos.xlsx: Planilla con ${gastos.length} gastos registrados
 - imagenes/: Carpeta con ${totalImagenes} comprobantes (fotos de documentos)
 
 INSTRUCCIONES:
 1. Abrir Rendicion_Gastos.xlsx
-2. La columna "Archivos Adjuntos" indica qué imágenes corresponden a cada gasto
-3. Las imágenes están en la carpeta "imagenes/" con nombres correlativos
+2. Las primeras 3 filas muestran el resumen del fondo
+3. La columna "Archivos Adjuntos" indica qué imágenes corresponden a cada gasto
+4. Las imágenes están en la carpeta "imagenes/" con nombres correlativos
 
 NOTA: Los archivos están nombrados como "gasto_X.png" o "gasto_X_imgY.png"
 donde X es el número de gasto e Y el número de imagen (si hay múltiples).
@@ -638,8 +723,10 @@ Generado por Sistema de Rendición de Gastos TOOLTEK SPA`;
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
-            cargarGastos();
+            cargarDatos();
             document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+            
+            document.getElementById('btnGuardarFondo').addEventListener('click', guardarFondo);
             
             document.getElementById('tipoDoc').addEventListener('change', (e) => {
                 const rutContainer = document.getElementById('rutContainer');
