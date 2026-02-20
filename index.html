@@ -176,6 +176,32 @@
         .stat-card h3 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
         .stat-card p { font-size: 12px; opacity: 0.9; }
         
+        .info-box {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            display: none;
+        }
+        .info-box.positivo {
+            background: #d1fae5;
+            border: 2px solid var(--success);
+            color: #065f46;
+            display: block;
+        }
+        .info-box.negativo {
+            background: #fee2e2;
+            border: 2px solid var(--danger);
+            color: #991b1b;
+            display: block;
+        }
+        .info-box strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        
         .alert { 
             padding: 12px; 
             border-radius: 8px; 
@@ -352,6 +378,16 @@
                     <p>Saldo Restante</p>
                 </div>
             </div>
+            
+            <div id="infoSaldoPositivo" class="info-box positivo">
+                <strong>✅ Saldo Positivo:</strong>
+                El colaborador deberá reintegrar a la empresa los fondos no utilizados.
+            </div>
+            
+            <div id="infoSaldoNegativo" class="info-box negativo">
+                <strong>⚠️ Saldo Negativo:</strong>
+                El colaborador deberá gestionar la solicitud de reembolso correspondiente a los sobregastos incurridos.
+            </div>
         </div>
     </div>
     
@@ -488,10 +524,23 @@
             // Cambiar color de tarjeta saldo según valor
             const saldoCard = document.getElementById('saldoCard');
             saldoCard.className = 'stat-card';
-            if (saldo >= 0) {
+            
+            // Mostrar/ocultar leyendas informativas
+            const infoPositivo = document.getElementById('infoSaldoPositivo');
+            const infoNegativo = document.getElementById('infoSaldoNegativo');
+            
+            if (saldo > 0) {
                 saldoCard.classList.add('saldo-positivo');
-            } else {
+                infoPositivo.style.display = 'block';
+                infoNegativo.style.display = 'none';
+            } else if (saldo < 0) {
                 saldoCard.classList.add('saldo-negativo');
+                infoPositivo.style.display = 'none';
+                infoNegativo.style.display = 'block';
+            } else {
+                // Saldo = 0, no mostrar leyendas
+                infoPositivo.style.display = 'none';
+                infoNegativo.style.display = 'none';
             }
         }
 
