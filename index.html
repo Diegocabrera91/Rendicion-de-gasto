@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rendición de Gastos - TOOLTEK SPA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -14,99 +14,330 @@
             --text-primary: #0f172a;
             --border: #e2e8f0;
             --success: #10b981;
+            --danger: #ef4444;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-base); color: var(--text-primary); line-height: 1.6; }
-        header { background: linear-gradient(135deg, var(--tooltek-blue), var(--tooltek-aqua)); color: white; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        header img { height: 120px; max-width: 100%; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .form-section, .tabla-section { background: var(--bg-card); padding: 24px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 20px; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; }
-        input[type="file"] { padding: 8px; }
-        input:focus, select:focus { outline: none; border-color: var(--tooltek-blue); box-shadow: 0 0 0 3px rgba(26,90,142,0.1); }
-        .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.2s; margin: 4px; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: var(--bg-base); 
+            color: var(--text-primary); 
+            line-height: 1.5;
+            padding-bottom: 20px;
+        }
+        header { 
+            background: linear-gradient(135deg, var(--tooltek-blue), var(--tooltek-aqua)); 
+            color: white; 
+            padding: 15px 10px; 
+            text-align: center; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        header img { height: 80px; max-width: 90%; margin-bottom: 8px; }
+        header h1 { font-size: 18px; font-weight: 600; }
+        .container { 
+            max-width: 100%; 
+            margin: 0 auto; 
+            padding: 10px; 
+        }
+        .form-section, .tabla-section { 
+            background: var(--bg-card); 
+            padding: 16px; 
+            border-radius: 12px; 
+            margin-bottom: 16px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+        }
+        .form-section h2 { font-size: 18px; margin-bottom: 16px; color: var(--tooltek-blue); }
+        .form-grid { 
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        label { 
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--tooltek-blue);
+        }
+        input, select, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid var(--border); 
+            border-radius: 8px; 
+            font-size: 16px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        input[type="file"] { padding: 8px; font-size: 14px; }
+        input:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: var(--tooltek-blue); 
+            box-shadow: 0 0 0 3px rgba(26,90,142,0.1); 
+        }
+        .btn { 
+            width: 100%;
+            padding: 14px 20px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: 600; 
+            transition: all 0.2s; 
+            margin: 6px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
         .btn-primary { background: var(--tooltek-blue); color: white; }
-        .btn-primary:hover { background: #144a72; }
+        .btn-primary:active { background: #144a72; transform: scale(0.98); }
         .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: #ef4444; color: white; }
+        .btn-success:active { background: #059669; transform: scale(0.98); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:active { background: #dc2626; transform: scale(0.98); }
         .btn-secondary { background: #6b7280; color: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { background: var(--tooltek-blue); color: white; font-weight: 600; }
-        tr:hover { background: #f1f5f9; }
-        .img-preview { max-width: 50px; max-height: 50px; border-radius: 4px; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-top: 20px; }
-        .stat-card { background: linear-gradient(135deg, var(--tooltek-aqua), #00d4ff); color: white; padding: 20px; border-radius: 12px; text-align: center; }
-        .alert { padding: 12px; border-radius: 8px; margin: 16px 0; }
-        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } header img { height: 100px; } }
+        .btn-secondary:active { background: #4b5563; transform: scale(0.98); }
+        
+        /* Tabla responsive para móvil */
+        .tabla-wrapper { 
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch;
+            margin: 16px -16px;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 600px;
+        }
+        th, td { 
+            padding: 10px 8px; 
+            text-align: left; 
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        th { 
+            background: var(--tooltek-blue); 
+            color: white; 
+            font-weight: 600; 
+            position: sticky;
+            top: 0;
+        }
+        tr:nth-child(even) { background: #f9fafb; }
+        .img-preview { 
+            max-width: 40px; 
+            max-height: 40px; 
+            border-radius: 4px; 
+            cursor: pointer;
+        }
+        .btn-small { 
+            padding: 6px 12px; 
+            font-size: 14px; 
+            width: auto;
+            min-width: 60px;
+        }
+        
+        .stats { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+            margin-top: 16px; 
+        }
+        .stat-card { 
+            background: linear-gradient(135deg, var(--tooltek-aqua), #00d4ff); 
+            color: white; 
+            padding: 16px; 
+            border-radius: 12px; 
+            text-align: center; 
+        }
+        .stat-card h3 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .stat-card p { font-size: 12px; opacity: 0.9; }
+        
+        .alert { 
+            padding: 12px; 
+            border-radius: 8px; 
+            margin: 12px 0; 
+            font-size: 14px;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 200;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .alert-success { background: #d1fae5; color: #065f46; border: 2px solid #10b981; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 2px solid #ef4444; }
+        
+        .acciones-top {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+        
+        @media (min-width: 768px) {
+            .container { max-width: 1200px; padding: 20px; }
+            .form-grid { 
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .form-grid textarea,
+            .form-grid input[type="file"] {
+                grid-column: span 2;
+            }
+            header img { height: 100px; }
+            header h1 { font-size: 24px; }
+            .btn { width: auto; }
+            .acciones-top { flex-direction: row; justify-content: space-between; }
+        }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://raw.githubusercontent.com/diegocabrera91/Rendicion-de-gasto/main/logo.png" alt="TOOLTEK SPA" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiMxYTVhOGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5UT09MS0VLIFNQQTwvdGV4dD48L3N2Zz4='">
+        <img src="https://raw.githubusercontent.com/diegocabrera91/Rendicion-de-gasto/main/logo.png" alt="TOOLTEK SPA" onerror="this.style.display='none'">
         <h1>Sistema de Rendición de Gastos</h1>
     </header>
+    
     <div class="container">
         <div class="form-section">
             <h2>📝 Nuevo Gasto</h2>
-            <div class="form-grid">
-                <input type="date" id="fecha" required>
-                <select id="tipoGasto" required>
-                    <option value="">Tipo de Gasto</option>
-                    <option>Gastos de Traslado por Representacion</option>
-                    <option>Gastos de Alimentacion por Representacion</option>
-                    <option>Gastos de Hospedaje por Representacion</option>
-                    <option>Gastos de Vehiculo por Representacion</option>
-                    <option>Gastos de Combustible por Representacion</option>
-                    <option>Otros Gastos por Representacion</option>
-                </select>
-                <select id="tipoDoc" required>
-                    <option value="">Tipo Documento</option>
-                    <option>Boleta</option>
-                    <option>Factura</option>
-                </select>
-                <input type="text" id="numDoc" placeholder="Número Documento" required>
-                <input type="text" id="rut" placeholder="RUT (solo Factura)">
-                <input type="text" id="empresa" placeholder="Empresa/Proveedor" required>
-                <input type="number" id="monto" placeholder="Monto CLP" step="0.01" required>
-                <textarea id="descripcion" placeholder="Descripción" rows="2"></textarea>
-                <input type="file" id="imagenes" multiple accept="image/*" capture="environment">
-            </div>
-            <div>
-                <button class="btn btn-primary" id="btnAgregar">➕ Agregar Gasto</button>
-                <button class="btn btn-secondary" id="btnLimpiar">🧹 Limpiar</button>
-            </div>
-        </div>
-        <div class="tabla-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2>📊 Gastos Registrados (<span id="totalGastos">0</span>)</h2>
+            <form id="formGasto" class="form-grid">
                 <div>
-                    <button class="btn btn-danger" id="btnEliminarTodo">🗑️ Eliminar Todo</button>
-                    <button class="btn btn-success" id="btnExportar">📥 Exportar Excel</button>
+                    <label>Fecha *</label>
+                    <input type="date" id="fecha" required>
+                </div>
+                <div>
+                    <label>Tipo de Gasto *</label>
+                    <select id="tipoGasto" required>
+                        <option value="">Seleccionar...</option>
+                        <option>Gastos de Traslado por Representacion</option>
+                        <option>Gastos de Alimentacion por Representacion</option>
+                        <option>Gastos de Hospedaje por Representacion</option>
+                        <option>Gastos de Vehiculo por Representacion</option>
+                        <option>Gastos de Combustible por Representacion</option>
+                        <option>Otros Gastos por Representacion</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Tipo Documento *</label>
+                    <select id="tipoDoc" required>
+                        <option value="">Seleccionar...</option>
+                        <option>Boleta</option>
+                        <option>Factura</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Número Documento *</label>
+                    <input type="text" id="numDoc" placeholder="123456" required>
+                </div>
+                <div id="rutContainer" style="display: none;">
+                    <label>RUT *</label>
+                    <input type="text" id="rut" placeholder="12345678-9">
+                </div>
+                <div>
+                    <label>Empresa/Proveedor *</label>
+                    <input type="text" id="empresa" placeholder="Nombre de la empresa" required>
+                </div>
+                <div>
+                    <label>Monto (CLP) *</label>
+                    <input type="number" id="monto" placeholder="15000" step="1" required inputmode="numeric">
+                </div>
+                <div>
+                    <label>Descripción</label>
+                    <textarea id="descripcion" placeholder="Detalles del gasto..." rows="3"></textarea>
+                </div>
+                <div>
+                    <label>Comprobante (Foto)</label>
+                    <input type="file" id="imagenes" multiple accept="image/*" capture="environment">
+                </div>
+            </form>
+            <button class="btn btn-primary" id="btnAgregar">➕ Agregar Gasto</button>
+            <button class="btn btn-secondary" id="btnLimpiar">🧹 Limpiar Formulario</button>
+        </div>
+        
+        <div class="tabla-section">
+            <div class="acciones-top">
+                <h2 style="margin: 0;">📊 Gastos (<span id="totalGastos">0</span>)</h2>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-danger btn-small" id="btnEliminarTodo">🗑️ Eliminar</button>
+                    <button class="btn btn-success btn-small" id="btnExportar">📥 Excel</button>
                 </div>
             </div>
-            <table id="tablaGastos">
-                <thead><tr><th>Fecha</th><th>Tipo Gasto</th><th>Doc</th><th>N°</th><th>RUT</th><th>Empresa</th><th>Monto</th><th>Imágenes</th><th>Acciones</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            
+            <div id="emptyState" class="empty-state">
+                <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                <p>No hay gastos registrados</p>
+            </div>
+            
+            <div class="tabla-wrapper" id="tablaWrapper" style="display: none;">
+                <table id="tablaGastos">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Doc</th>
+                            <th>N°</th>
+                            <th>RUT</th>
+                            <th>Empresa</th>
+                            <th>Monto</th>
+                            <th>Img</th>
+                            <th>🗑️</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
             <div class="stats">
                 <div class="stat-card">
-                    <h3 id="totalMonto">0</h3>
+                    <h3 id="totalMonto">$0</h3>
                     <p>Total Gastos</p>
                 </div>
                 <div class="stat-card">
-                    <h3 id="promedioMonto">0</h3>
-                    <p>Promedio por Gasto</p>
+                    <h3 id="promedioMonto">$0</h3>
+                    <p>Promedio</p>
                 </div>
             </div>
-            <div id="alertas"></div>
         </div>
     </div>
+    
+    <div id="alertas"></div>
+    
     <script>
-        let gastos = JSON.parse(localStorage.getItem('gastos')) || [];
+        let gastos = [];
         let imagenesActuales = [];
+
+        // Cargar gastos al iniciar
+        function cargarGastos() {
+            try {
+                const gastosGuardados = localStorage.getItem('gastosTooltek');
+                gastos = gastosGuardados ? JSON.parse(gastosGuardados) : [];
+            } catch (e) {
+                console.error('Error cargando gastos:', e);
+                gastos = [];
+            }
+        }
+
+        function guardarGastos() {
+            try {
+                localStorage.setItem('gastosTooltek', JSON.stringify(gastos));
+            } catch (e) {
+                mostrarAlerta('Error al guardar en caché', 'error');
+            }
+        }
 
         function mostrarAlerta(mensaje, tipo = 'success') {
             const alertas = document.getElementById('alertas');
@@ -114,139 +345,250 @@
             alerta.className = `alert alert-${tipo}`;
             alerta.textContent = mensaje;
             alertas.appendChild(alerta);
-            setTimeout(() => alerta.remove(), 5000);
+            setTimeout(() => alerta.remove(), 3000);
         }
 
         async function archivosABase64(files) {
             const base64Array = [];
             for (let file of files) {
-                const base64 = await new Promise(resolve => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.readAsDataURL(file);
-                });
-                base64Array.push(base64);
+                try {
+                    const base64 = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                    base64Array.push(base64);
+                } catch (e) {
+                    console.error('Error leyendo archivo:', e);
+                }
             }
             return base64Array;
         }
 
-        function guardarGastos() {
-            localStorage.setItem('gastos', JSON.stringify(gastos));
+        function formatearMonto(monto) {
+            return new Intl.NumberFormat('es-CL', {
+                style: 'currency',
+                currency: 'CLP',
+                minimumFractionDigits: 0
+            }).format(monto);
         }
 
         function actualizarTabla() {
             const tbody = document.querySelector('#tablaGastos tbody');
+            const emptyState = document.getElementById('emptyState');
+            const tablaWrapper = document.getElementById('tablaWrapper');
+            
             tbody.innerHTML = '';
-            gastos.forEach((gasto, index) => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${new Date(gasto.fecha).toLocaleDateString('es-CL')}</td>
-                    <td>${gasto.tipoGasto}</td>
-                    <td>${gasto.tipoDoc}</td>
-                    <td>${gasto.numDoc}</td>
-                    <td>${gasto.rut || ''}</td>
-                    <td>${gasto.empresa}</td>
-                    <td>$${parseFloat(gasto.monto).toLocaleString('es-CL')}</td>
-                    <td>${gasto.imagenes?.map((img, i) => `<img src="${img}" class="img-preview" title="Img ${i+1}">`).join(' ') || ''}</td>
-                    <td><button class="btn btn-danger" onclick="eliminarGasto(${index})">🗑️</button></td>
-                `;
-            });
+            
+            if (gastos.length === 0) {
+                emptyState.style.display = 'block';
+                tablaWrapper.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                tablaWrapper.style.display = 'block';
+                
+                gastos.forEach((gasto, index) => {
+                    const row = tbody.insertRow();
+                    const fechaFormat = new Date(gasto.fecha + 'T00:00:00').toLocaleDateString('es-CL', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: '2-digit'
+                    });
+                    
+                    row.innerHTML = `
+                        <td>${fechaFormat}</td>
+                        <td>${gasto.tipoGasto.replace('Gastos de ', '').replace(' por Representacion', '')}</td>
+                        <td>${gasto.tipoDoc}</td>
+                        <td>${gasto.numDoc}</td>
+                        <td>${gasto.rut || '-'}</td>
+                        <td>${gasto.empresa}</td>
+                        <td>${formatearMonto(gasto.monto)}</td>
+                        <td>${gasto.imagenes && gasto.imagenes.length ? `<img src="${gasto.imagenes[0]}" class="img-preview" onclick="verImagen('${gasto.imagenes[0]}')">` : '-'}</td>
+                        <td><button class="btn btn-danger btn-small" onclick="eliminarGasto(${index})" style="width: 40px; padding: 6px;">🗑️</button></td>
+                    `;
+                });
+            }
+            
             document.getElementById('totalGastos').textContent = gastos.length;
             actualizarEstadisticas();
-            guardarGastos();
         }
 
         function actualizarEstadisticas() {
             const total = gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
             const count = gastos.length;
-            document.getElementById('totalMonto').textContent = '$' + total.toLocaleString('es-CL');
-            document.getElementById('promedioMonto').textContent = count ? (total / count).toLocaleString('es-CL') : '0';
+            const promedio = count > 0 ? total / count : 0;
+            
+            document.getElementById('totalMonto').textContent = formatearMonto(total);
+            document.getElementById('promedioMonto').textContent = formatearMonto(promedio);
         }
 
         function agregarGasto() {
-            const gasto = {
-                fecha: document.getElementById('fecha').value,
-                tipoGasto: document.getElementById('tipoGasto').value,
-                tipoDoc: document.getElementById('tipoDoc').value,
-                numDoc: document.getElementById('numDoc').value,
-                rut: document.getElementById('rut').value || '',
-                empresa: document.getElementById('empresa').value,
-                monto: document.getElementById('monto').value,
-                descripcion: document.getElementById('descripcion').value,
-                imagenes: [...imagenesActuales]
-            };
-            if (!gasto.fecha || !gasto.tipoGasto || !gasto.tipoDoc || !gasto.numDoc || !gasto.empresa || !gasto.monto) {
-                mostrarAlerta('Completa todos los campos obligatorios', 'error');
+            const fecha = document.getElementById('fecha').value;
+            const tipoGasto = document.getElementById('tipoGasto').value;
+            const tipoDoc = document.getElementById('tipoDoc').value;
+            const numDoc = document.getElementById('numDoc').value.trim();
+            const rut = document.getElementById('rut').value.trim();
+            const empresa = document.getElementById('empresa').value.trim();
+            const monto = document.getElementById('monto').value;
+            const descripcion = document.getElementById('descripcion').value.trim();
+
+            // Validaciones
+            if (!fecha || !tipoGasto || !tipoDoc || !numDoc || !empresa || !monto) {
+                mostrarAlerta('❌ Completa todos los campos obligatorios (*)', 'error');
                 return;
             }
-            gastos.push(gasto);  // ✅ AGREGA AL ARRAY
+
+            if (tipoDoc === 'Factura' && !rut) {
+                mostrarAlerta('❌ RUT obligatorio para Facturas', 'error');
+                return;
+            }
+
+            const gasto = {
+                id: Date.now(),
+                fecha,
+                tipoGasto,
+                tipoDoc,
+                numDoc,
+                rut: tipoDoc === 'Factura' ? rut : '',
+                empresa,
+                monto: parseFloat(monto),
+                descripcion,
+                imagenes: [...imagenesActuales]
+            };
+
+            gastos.push(gasto);
+            guardarGastos();
             limpiarFormulario();
             actualizarTabla();
             mostrarAlerta(`✅ Gasto agregado. Total: ${gastos.length}`);
+            
+            // Scroll a la tabla en móvil
+            if (window.innerWidth < 768) {
+                document.querySelector('.tabla-section').scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
         function limpiarFormulario() {
+            document.getElementById('formGasto').reset();
             document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
-            document.getElementById('tipoGasto').value = '';
-            document.getElementById('tipoDoc').value = '';
-            document.getElementById('numDoc').value = '';
-            document.getElementById('rut').value = '';
-            document.getElementById('empresa').value = '';
-            document.getElementById('monto').value = '';
-            document.getElementById('descripcion').value = '';
+            document.getElementById('rutContainer').style.display = 'none';
             imagenesActuales = [];
-            document.getElementById('imagenes').value = '';
         }
 
         function eliminarGasto(index) {
             if (confirm('¿Eliminar este gasto?')) {
                 gastos.splice(index, 1);
+                guardarGastos();
                 actualizarTabla();
                 mostrarAlerta('🗑️ Gasto eliminado');
             }
         }
 
         function eliminarTodo() {
-            if (confirm('¿Eliminar TODOS los gastos?')) {
+            if (gastos.length === 0) {
+                mostrarAlerta('No hay gastos para eliminar', 'error');
+                return;
+            }
+            if (confirm(`¿Eliminar TODOS los ${gastos.length} gastos?`)) {
                 gastos = [];
+                guardarGastos();
                 actualizarTabla();
                 mostrarAlerta('🗑️ Todos los gastos eliminados', 'error');
             }
         }
 
         function exportarExcel() {
-            const wb = XLSX.utils.book_new();
-            const data = gastos.map(g => ({
-                Fecha: new Date(g.fecha).toLocaleDateString('es-CL'),
-                'Tipo Gasto': g.tipoGasto,
-                'Tipo Doc': g.tipoDoc,
-                'N° Doc': g.numDoc,
-                RUT: g.rut,
-                Empresa: g.empresa,
-                Monto: parseFloat(g.monto),
-                Descripción: g.descripcion,
-                Imágenes: g.imagenes ? g.imagenes.join('; ') : ''
-            }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            XLSX.utils.book_append_sheet(wb, ws, 'Gastos');
-            XLSX.writeFile(wb, `Rendicion_Gastos_TOOLTEK_${new Date().toISOString().split('T')[0]}.xlsx`);
-            mostrarAlerta('📥 Excel exportado');
+            if (gastos.length === 0) {
+                mostrarAlerta('❌ No hay gastos para exportar', 'error');
+                return;
+            }
+
+            try {
+                const wb = XLSX.utils.book_new();
+                
+                // Preparar datos
+                const data = gastos.map((g, i) => ({
+                    'N°': i + 1,
+                    'Fecha': new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-CL'),
+                    'Tipo de Gasto': g.tipoGasto,
+                    'Tipo Documento': g.tipoDoc,
+                    'N° Documento': g.numDoc,
+                    'RUT': g.rut || '',
+                    'Empresa/Proveedor': g.empresa,
+                    'Monto (CLP)': parseFloat(g.monto),
+                    'Descripción': g.descripcion || '',
+                    'Cant. Imágenes': g.imagenes ? g.imagenes.length : 0
+                }));
+
+                // Crear hoja
+                const ws = XLSX.utils.json_to_sheet(data);
+                
+                // Ajustar anchos de columna
+                ws['!cols'] = [
+                    {wch: 5},  // N°
+                    {wch: 12}, // Fecha
+                    {wch: 35}, // Tipo Gasto
+                    {wch: 12}, // Tipo Doc
+                    {wch: 15}, // N° Doc
+                    {wch: 15}, // RUT
+                    {wch: 25}, // Empresa
+                    {wch: 15}, // Monto
+                    {wch: 30}, // Descripción
+                    {wch: 10}  // Imágenes
+                ];
+
+                XLSX.utils.book_append_sheet(wb, ws, 'Gastos');
+                
+                // Generar archivo
+                const fecha = new Date().toISOString().split('T')[0];
+                const filename = `Rendicion_Gastos_TOOLTEK_${fecha}.xlsx`;
+                XLSX.writeFile(wb, filename);
+                
+                mostrarAlerta(`✅ Excel exportado: ${gastos.length} gastos`);
+            } catch (error) {
+                console.error('Error exportando:', error);
+                mostrarAlerta('❌ Error al exportar. Intenta de nuevo', 'error');
+            }
         }
 
-        // Eventos
+        function verImagen(src) {
+            window.open(src, '_blank');
+        }
+
+        // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
+            cargarGastos();
             document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+            
             document.getElementById('tipoDoc').addEventListener('change', (e) => {
-                document.getElementById('rut').required = e.target.value === 'Factura';
-                if (e.target.value !== 'Factura') document.getElementById('rut').value = '';
+                const rutContainer = document.getElementById('rutContainer');
+                if (e.target.value === 'Factura') {
+                    rutContainer.style.display = 'block';
+                    document.getElementById('rut').required = true;
+                } else {
+                    rutContainer.style.display = 'none';
+                    document.getElementById('rut').required = false;
+                    document.getElementById('rut').value = '';
+                }
             });
+
             document.getElementById('imagenes').addEventListener('change', async (e) => {
-                imagenesActuales = await archivosABase64(e.target.files);
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                    mostrarAlerta(`📷 Procesando ${files.length} imagen(es)...`);
+                    imagenesActuales = await archivosABase64(files);
+                    if (imagenesActuales.length > 0) {
+                        mostrarAlerta(`✅ ${imagenesActuales.length} imagen(es) lista(s)`);
+                    }
+                }
             });
+
             document.getElementById('btnAgregar').addEventListener('click', agregarGasto);
             document.getElementById('btnLimpiar').addEventListener('click', limpiarFormulario);
             document.getElementById('btnEliminarTodo').addEventListener('click', eliminarTodo);
             document.getElementById('btnExportar').addEventListener('click', exportarExcel);
+            
             actualizarTabla();
         });
     </script>
